@@ -1,4 +1,4 @@
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram import html, Router, F
@@ -13,7 +13,9 @@ from static_text.static_text import (
 )
 from services.handlers_services import (
     get_master,
-    save_image)
+    save_image,
+    create_master_and_schedule
+    )
 from keyboards.keyboards import master_keyboard, admin_keyboard
 from forms.forms import StartWorkForm, EndWorkForm
 
@@ -25,8 +27,9 @@ handlers_router = Router()
 async def command_start_handler(message: Message) -> None:
     user = await get_master(message.chat.id)
     if not user:
-        await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{NO_MASTER_FOUND}",
-                             )
+        await create_master_and_schedule(message)
+        await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{MASTER_START_TEXT}",
+                             reply_markup=master_keyboard)
         return
     if user.is_manager:
         await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{ADMIN_START_TEXT}",
@@ -34,6 +37,11 @@ async def command_start_handler(message: Message) -> None:
         return
     await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{MASTER_START_TEXT}",
                          reply_markup=master_keyboard)
+
+
+@handlers_router.message(Command("chat"))
+async def send_telegram_id(message: Message) -> None:
+    await message.answer(f"Ваш id в телеграм {message.chat.id}.")
 
 
 @handlers_router.message(F.text == "Приступил к работе")
