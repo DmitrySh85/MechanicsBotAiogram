@@ -7,17 +7,13 @@ from sqlalchemy import and_
 
 
 async def get_message_from_schedules(department: int):
-    today = date.today()
-    start_of_day = datetime.combine(today, datetime.min.time())
-    end_of_day = datetime.combine(today, datetime.max.time())
-
-    schedules = await get_shedules_from_db(start_of_day, end_of_day, department)
+    schedules = await get_shedules_from_db(department)
     message_text = await transfer_schedules_to_message_text(schedules)
     return message_text
 
-async def get_shedules_from_db(start_of_day, end_of_day, department):
+async def get_shedules_from_db(department):
     async with get_session() as session:
-        stmt = select(Master.name, Schedule.time_start, Schedule.time_end).join(Master, Schedule.master == Master.id).filter(and_(Schedule.time_start >= start_of_day, Schedule.time_end <= end_of_day, Master.department == department))
+        stmt = select(Master.name, Schedule.time_start, Schedule.time_end).join(Master, Schedule.master == Master.id).filter(Master.department == department)
         result = await session.execute(stmt)
     schedules = result.all()
     return schedules
@@ -25,7 +21,10 @@ async def get_shedules_from_db(start_of_day, end_of_day, department):
 async def transfer_schedules_to_message_text(querys):
     message_text = ""
     for query in querys:
-        message_text += f"Мастер {query[0]} начинает смену в {query[1].strftime("%Y-%m-%d %H:%M")}, заканчивает в {query[2].strftime("%Y-%m-%d %H:%M")}.\n"
+        master_name = query[0]
+        time_start = query[1].strftime("%H:%M")
+        time_end = query[2].strftime("%H:%M")
+        message_text += f"Мастер {master_name} начинает смену в {time_start}, заканчивает в {time_end}.\n"
     return message_text
 
 

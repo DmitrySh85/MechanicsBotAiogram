@@ -1,9 +1,11 @@
 import os
+from datetime import time
 
 from aiogram.types import Message
 from db import get_session
-from models.models import Master, Image
+from models.models import Master, Image, Schedule
 from sqlalchemy import select, insert
+from settings import START_WORK_TIME, END_WORK_TIME
 
 
 async def save_image(message: Message):
@@ -44,3 +46,40 @@ async def get_master(chat_id: int):
         result = await session.scalar(stmt)
         return result
 
+async def create_master_and_schedule(message: Message):
+    name = message.from_user.full_name
+    chat_id = message.chat.id
+    created_master_id = await create_master(name, chat_id)
+    await create_schedule_for_master(created_master_id)
+
+
+async def create_master(name, chat_id):
+    async with get_session() as session:
+        stmt = insert(Master).values(
+            name=name,
+            tg_id=chat_id,
+            department=1,
+            is_manager=False
+        )
+        await session.execute(stmt)
+        await session.commit()
+        result = await session.execute(select(Master).filter_by(name=name, tg_id=chat_id))
+        created_master = result.scalar()
+        created_master_id = created_master.id
+        return created_master_id
+
+async def create_schedule_for_master(created_master_id):
+    async with get_session() as session:
+        time_start = convert_string_to_time(START_WORK_TIME)
+        time_end = convert_string_to_time(END_WORK_TIME)
+        stmt = insert(Schedule).values(
+            master=created_master_id,
+            time_start=time_start,
+            time_end=time_end
+        )
+        await session.execute(stmt)
+        await session.commit()
+    print("Schedule created")
+
+def convert_string_to_time(string: str) ->time:
+    return time(hour=int(string[0:2]), minute=int(string[3:5]))
