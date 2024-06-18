@@ -2,8 +2,8 @@ import asyncio
 
 from sqlalchemy import insert
 
-from src.db import get_session
-from src.models.models import Department
+from db import get_session
+from models.models import Department
 
 
 async def create_default_department():
