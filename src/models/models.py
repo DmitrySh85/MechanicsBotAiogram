@@ -1,6 +1,8 @@
+import pytz
 from db import Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Time
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Time, BigInteger
 from datetime import datetime
+from sqlalchemy import func
 
 
 class Department(Base):
@@ -13,7 +15,7 @@ class Master(Base):
     __tablename__ = "master"
     id = Column(Integer(), primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=True)
-    tg_id = Column(Integer(), unique=True, nullable=False)
+    tg_id = Column(BigInteger(), unique=True, nullable=False)
     is_manager = Column(Boolean(), default=False)
     department = Column(Integer(), ForeignKey("department.id"))
 
@@ -30,5 +32,5 @@ class Image(Base):
     __tablename__ = "image"
     id = Column(Integer(), primary_key=True, autoincrement=True)
     master = Column(Integer(), ForeignKey("master.id"))
-    created_at = Column(DateTime(), default=datetime.now)
+    created_at = Column(DateTime(timezone=True), default=func.now())
     link = Column(String(300), nullable=False)

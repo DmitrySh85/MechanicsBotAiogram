@@ -1,5 +1,6 @@
 from datetime import date, datetime
 
+import pytz
 from db import get_session
 from models.models import Schedule, Master, Image, Department
 from sqlalchemy import select
@@ -46,7 +47,10 @@ def get_result_dict_from_querys(querys):
     results = []
     for query in querys:
         image_link = query[0]
-        time_created = query[1].strftime("%Y-%m-%d %H:%M")
+        utc_time = query[1]
+        moscow_tz = pytz.timezone('Europe/Moscow')
+        moscow_time = utc_time.astimezone(moscow_tz)
+        time_created = moscow_time.strftime("%Y-%m-%d %H:%M")
         master = query[2]
         text = f"{master} загрузил в {time_created}"
         results.append(

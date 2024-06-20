@@ -1,6 +1,7 @@
 import os
-from datetime import time
+from datetime import time, datetime, timezone, timedelta
 
+import pytz
 from aiogram.types import Message
 from db import get_session
 from models.models import Master, Image, Schedule
@@ -28,7 +29,8 @@ async def add_image_link_to_db(image_link, master_id):
     async with get_session() as session:
         stmt = insert(Image).values(
             master=master_id,
-            link=image_link
+            link=image_link,
+            created_at=datetime.now(tz=pytz.timezone("Europe/Moscow"))
         )
         await session.execute(stmt)
         await session.commit()
