@@ -9,6 +9,7 @@ from sqlalchemy import select, insert
 from settings import START_WORK_TIME, END_WORK_TIME
 
 
+
 async def save_image(message: Message):
     image_link = await save_image_to_hdd(message)
     chat_id = message.chat.id
@@ -85,3 +86,13 @@ async def create_schedule_for_master(created_master_id):
 
 def convert_string_to_time(string: str) ->time:
     return time(hour=int(string[0:2]), minute=int(string[3:5]))
+
+def convert_string_to_time_with_offset(string: str, offset: str) -> time:
+    '''
+    t = time(hour=int(string[0:2]), minute=int(string[3:5]))
+    result = t + timedelta(minutes=int(offset))
+    return result
+    '''
+    t = datetime.strptime(string, '%H:%M')
+    result = t + timedelta(minutes=int(offset))
+    return result.time()
