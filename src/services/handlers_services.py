@@ -89,6 +89,6 @@ def convert_string_to_time(string: str) ->time:
 
 def convert_string_to_time_with_offset(string: str, offset: str) -> time:
 
-    t = datetime.strptime(string, '%H:%M')
+    t = datetime.strptime(string, '%H:%M:%S')
     result = t + timedelta(minutes=int(offset))
     return result.time()
