@@ -27,7 +27,7 @@ async def create_manager():
     if master_id:
         async with get_session() as session:
             stmt = update(Master).values(
-                is_manager=True, name=name
+                is_manager=True, name=name, is_blocked=False
             ).where(Master.id == master_id)
             await session.execute(stmt)
             await session.commit()
@@ -39,7 +39,7 @@ async def create_manager():
             name=name,
             tg_id=int(tg_id),
             is_manager=True,
-            department=1
+            department=1,
         )
         await session.execute(stmt)
         await session.commit()

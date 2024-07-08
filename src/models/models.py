@@ -17,7 +17,9 @@ class Master(Base):
     name = Column(String(100), nullable=True)
     tg_id = Column(BigInteger(), unique=True, nullable=False)
     is_manager = Column(Boolean(), default=False)
-    department = Column(Integer(), ForeignKey("department.id"))
+    department = Column(Integer(), ForeignKey("department.id"), nullable=True)
+    is_blocked = Column(Boolean(), default=False)
+
 
 
 class Schedule(Base):
