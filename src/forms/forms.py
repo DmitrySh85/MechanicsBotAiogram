@@ -7,3 +7,7 @@ class StartWorkForm(StatesGroup):
 
 class EndWorkForm(StatesGroup):
     end_work = State()
+
+
+class DateSelectState(StatesGroup):
+    date_select = State()

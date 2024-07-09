@@ -3,8 +3,7 @@ from datetime import date, datetime
 import pytz
 from db import get_session
 from models.models import Schedule, Master, Image, Department
-from sqlalchemy import select
-from sqlalchemy import and_
+from sqlalchemy import select, func
 
 
 async def get_message_from_schedules(department: int):
@@ -12,12 +11,14 @@ async def get_message_from_schedules(department: int):
     message_text = await transfer_schedules_to_message_text(schedules)
     return message_text
 
+
 async def get_shedules_from_db(department):
     async with get_session() as session:
         stmt = select(Master.name, Schedule.time_start, Schedule.time_end).join(Master, Schedule.master == Master.id).filter(Master.department == department)
         result = await session.execute(stmt)
     schedules = result.all()
     return schedules
+
 
 async def transfer_schedules_to_message_text(querys):
     message_text = ""
@@ -37,11 +38,13 @@ async def get_message_from_photos(department):
     results = get_result_dict_from_querys(querys)
     return results
 
+
 async def get_images_from_db(start_of_day, end_of_day, department):
     async with get_session() as session:
-        stmt = select(Image.link, Image.created_at, Master.name).join(Master, Master.id == Image.master).join(Department, Master.department == department).filter(Image.created_at <= end_of_day, Image.created_at >= start_of_day)
+        stmt = select(Image.link, Image.created_at, Master.name).distinct().join(Master, Master.id == Image.master).join(Department, Master.department == department).filter(Image.created_at <= end_of_day, Image.created_at >= start_of_day)
         result = await session.execute(stmt)
         return result.all()
+
 
 def get_result_dict_from_querys(querys):
     results = []
@@ -57,3 +60,24 @@ def get_result_dict_from_querys(querys):
             {"image_link": image_link, "text": text}
         )
     return results
+
+def parse_date_from_message_text(text: str) -> date:
+    return datetime.strptime(text, "%d-%m-%Y")
+
+
+async def get_images_and_messages_for_the_date(date: datetime):
+    querys = await get_images_for_the_date(date)
+    results = get_result_dict_from_querys(querys)
+    return results
+
+
+async def get_images_for_the_date(selected_date: datetime):
+    async with get_session() as session:
+        stmt = select(Image.link, Image.created_at, Master.name).distinct().join(
+            Master, Master.id == Image.master
+        ).filter(
+            func.DATE(Image.created_at) == selected_date
+        )
+        result = await session.execute(stmt)
+        images = result.all()
+    return images

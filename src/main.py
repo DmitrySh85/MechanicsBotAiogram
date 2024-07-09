@@ -2,7 +2,6 @@ import asyncio
 import logging
 from scheduler import send_reminder_to_masters
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import datetime
 from settings import START_WORK_TIME, END_WORK_TIME, REMINDER_OFFSET
 from services.handlers_services import convert_string_to_time_with_offset
 
