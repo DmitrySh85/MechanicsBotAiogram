@@ -26,7 +26,9 @@ admin_keyboard = ReplyKeyboardMarkup(
             keyboard=[
                 [
                 KeyboardButton(text=SCHEDULE_BTN),
-                KeyboardButton(text=WORKPLACE_IMAGE_BTN),
+                KeyboardButton(text=WORKPLACE_IMAGE_BTN)
+                ],
+                [
                 KeyboardButton(text=SELECTED_DATE_IMAGE_BTN)
                 ]
             ],
