@@ -48,3 +48,5 @@ SCHEDULE_BTN = "Расписание на сегодня"
 WORKPLACE_IMAGE_BTN = "Фото рабочего места"
 
 SELECTED_DATE_IMAGE_BTN = "Фото за выбранный день"
+
+UPDATE_USERNAME_TEXT = "{username}, ваше имя успешно обновлено в базе."

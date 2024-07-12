@@ -57,3 +57,10 @@ async def get_manager_tg_ids_from_db():
     admin_list = result.fetchall()
     return [tg_id.tg_id for tg_id in admin_list]
 
+
+async def update_username(user_id: int, username: str) -> None:
+    async with get_session() as session:
+        stmt = update(Master).values(name=username)
+        await session.execute(stmt)
+        await session.commit()
+

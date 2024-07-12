@@ -12,7 +12,9 @@ from static_text.static_text import (
     NO_MASTER_FOUND,
     registration_confirm_callback_data,
     registration_reject_callback_data,
-    REGISTRATION_REJECT_MESSAGE
+    REGISTRATION_REJECT_MESSAGE,
+    UPDATE_USERNAME_TEXT
+
 
 )
 from services.handlers_services import (
@@ -29,7 +31,8 @@ from senders.senders import (
 )
 from services.users_services import (
     register_user,
-    reject_user
+    reject_user,
+    update_username
 )
 
 handlers_router = Router()
@@ -41,12 +44,12 @@ async def command_start_handler(message: Message) -> None:
     user = await get_master(message.chat.id)
     if not user:
         await send_registration_request_to_admin(message)
-        await send_not_registered_message(message)
+        return await send_not_registered_message(message)
 
     if user.is_manager:
-        await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{ADMIN_START_TEXT}",
+        return await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{ADMIN_START_TEXT}",
                              reply_markup=admin_keyboard)
-        return
+
     await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{MASTER_START_TEXT}",
                          reply_markup=master_keyboard)
 
@@ -102,6 +105,19 @@ async def handle_register_rejection(callback_query: CallbackQuery):
 async def send_telegram_id(message: Message) -> None:
     logging.info(f"Chat id request from {message.chat.id}")
     await message.answer(f"Ваш id в телеграм {message.chat.id}.")
+
+
+@handlers_router.message(Command("name"))
+async def hanlde_update_username(message: Message) -> None:
+    logging.info(f"Start command from {message.chat.id}")
+    user = await get_master(message.chat.id)
+    if not user:
+        await send_registration_request_to_admin(message)
+        return await send_not_registered_message(message)
+    user_id = user.id
+    username = message.from_user.full_name
+    await update_username(user_id, username)
+    return await message.answer(UPDATE_USERNAME_TEXT.format(username=username))
 
 
 @handlers_router.message(F.text == "Приступил к работе")
