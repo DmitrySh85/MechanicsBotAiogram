@@ -60,7 +60,7 @@ async def get_manager_tg_ids_from_db():
 
 async def update_username(user_id: int, username: str) -> None:
     async with get_session() as session:
-        stmt = update(Master).values(name=username)
+        stmt = update(Master).values(name=username).where(Master.id == user_id)
         await session.execute(stmt)
         await session.commit()
 

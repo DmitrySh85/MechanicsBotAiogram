@@ -108,7 +108,7 @@ async def send_telegram_id(message: Message) -> None:
 
 
 @handlers_router.message(Command("name"))
-async def hanlde_update_username(message: Message) -> None:
+async def handle_update_username(message: Message) -> None:
     logging.info(f"Start command from {message.chat.id}")
     user = await get_master(message.chat.id)
     if not user:
