@@ -43,6 +43,12 @@ START_WORK_BTN = "Приступил к работе"
 
 END_WORK_BTN = "Закончил работу"
 
+DAY_OFF_BTN = "Выходной"
+
+DAY_OFF_TEXT = "Спасибо. Приятного отдыха!"
+
+DAY_OFF_TEXT_TO_ADMIN = "{username} сегодня выходной."
+
 SCHEDULE_BTN = "Расписание на сегодня"
 
 WORKPLACE_IMAGE_BTN = "Фото рабочего места"
@@ -50,3 +56,5 @@ WORKPLACE_IMAGE_BTN = "Фото рабочего места"
 SELECTED_DATE_IMAGE_BTN = "Фото за выбранный день"
 
 UPDATE_USERNAME_TEXT = "{username}, ваше имя успешно обновлено в базе."
+
+NO_PHOTO_ADMIN_NOTIFICATION_TEXT = "{masters} не прислал(и) фото рабочего места."

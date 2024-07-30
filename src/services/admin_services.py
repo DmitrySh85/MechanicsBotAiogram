@@ -41,7 +41,13 @@ async def get_message_from_photos(department):
 
 async def get_images_from_db(start_of_day, end_of_day, department):
     async with get_session() as session:
-        stmt = select(Image.link, Image.created_at, Master.name).distinct().join(Master, Master.id == Image.master).join(Department, Master.department == department).filter(Image.created_at <= end_of_day, Image.created_at >= start_of_day)
+        stmt = (
+            select(Image.link, Image.created_at, Master.name)
+            .distinct().join(Master, Master.id == Image.master)
+            .join(Department, Master.department == department)
+            .filter(Image.created_at <= end_of_day, Image.created_at >= start_of_day)
+            .order_by(Master.name)
+        )
         result = await session.execute(stmt)
         return result.all()
 

@@ -36,6 +36,7 @@ async def add_image_link_to_db(image_link, master_id):
         await session.execute(stmt)
         await session.commit()
 
+
 async def get_master_id_from_chat_id(chat_id):
     async with get_session() as session:
         stmt = select(Master.id).where(Master.tg_id == chat_id)
@@ -82,7 +83,7 @@ async def create_schedule_for_master(created_master_id):
         )
         await session.execute(stmt)
         await session.commit()
-    print("Schedule created")
+
 
 def convert_string_to_time(string: str) ->time:
     return time(hour=int(string[0:2]), minute=int(string[3:5]))

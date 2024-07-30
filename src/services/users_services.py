@@ -30,6 +30,7 @@ async def reject_user(tg_id: int, username: str):
         return await set_master_is_blocked(tg_id)
     await insert_blocked_master_to_db(tg_id, username)
 
+
 async def set_master_is_blocked(tg_id: int):
     async with get_session() as session:
         stmt = update(Master).where(Master.id == tg_id).values(is_blocked=True)

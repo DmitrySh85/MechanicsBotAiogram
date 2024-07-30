@@ -6,6 +6,7 @@ from static_text.static_text import (
     registration_reject_callback_data,
     START_WORK_BTN,
     END_WORK_BTN,
+    DAY_OFF_BTN,
     SCHEDULE_BTN,
     WORKPLACE_IMAGE_BTN,
     SELECTED_DATE_IMAGE_BTN
@@ -16,7 +17,12 @@ master_keyboard = ReplyKeyboardMarkup(
             keyboard=[
                 [
                     KeyboardButton(text=START_WORK_BTN),
+                                    ],
+                [
                     KeyboardButton(text=END_WORK_BTN),
+                ],
+                [
+                    KeyboardButton(text=DAY_OFF_BTN)
                 ]
             ],
             resize_keyboard=True,

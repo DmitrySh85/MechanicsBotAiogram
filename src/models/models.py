@@ -1,7 +1,6 @@
 import pytz
 from db import Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Time, BigInteger
-from datetime import datetime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Time, BigInteger, Date
 from sqlalchemy import func
 
 
@@ -36,3 +35,11 @@ class Image(Base):
     master = Column(Integer(), ForeignKey("master.id"))
     created_at = Column(DateTime(timezone=True), default=func.now())
     link = Column(String(300), nullable=False)
+
+
+class DayOff(Base):
+    __tablename__ = "day_off"
+    id = Column(Integer(), primary_key=True, autoincrement=True)
+    master = Column(Integer(), ForeignKey("master.id"))
+    date = Column(Date(), nullable=False, default=func.current_date())
+

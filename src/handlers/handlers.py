@@ -13,8 +13,10 @@ from static_text.static_text import (
     registration_confirm_callback_data,
     registration_reject_callback_data,
     REGISTRATION_REJECT_MESSAGE,
-    UPDATE_USERNAME_TEXT
-
+    UPDATE_USERNAME_TEXT,
+    DAY_OFF_BTN,
+    DAY_OFF_TEXT,
+    DAY_OFF_TEXT_TO_ADMIN
 
 )
 from services.handlers_services import (
@@ -32,8 +34,11 @@ from senders.senders import (
 from services.users_services import (
     register_user,
     reject_user,
-    update_username
+    update_username,
+    get_manager_tg_ids_from_db
 )
+from services.day_off_services import create_day_off
+
 
 handlers_router = Router()
 
@@ -149,5 +154,17 @@ async def process_start_work_image(message: Message, state: FSMContext) -> None:
     await state.clear()
     await message.answer(MASTER_END_WORK_IMAGE_RECEIVED_TEXT, reply_markup=master_keyboard)
 
+
+@handlers_router.message(F.text == DAY_OFF_BTN)
+async def process_day_off_handler(message: Message) -> None:
+    chat_id = message.chat.id
+    logging.info(f"Day off message from {chat_id}")
+    await message.answer(DAY_OFF_TEXT, reply_markup=master_keyboard)
+    await create_day_off(chat_id)
+    username = message.from_user.full_name
+    message_text = DAY_OFF_TEXT_TO_ADMIN.format(username=username)
+    managers_chat_ids = await get_manager_tg_ids_from_db()
+    for manager_id in managers_chat_ids:
+        await message.bot.send_message(manager_id, message_text, reply_markup=admin_keyboard)
 
 
