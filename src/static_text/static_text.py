@@ -58,3 +58,5 @@ SELECTED_DATE_IMAGE_BTN = "Фото за выбранный день"
 UPDATE_USERNAME_TEXT = "{username}, ваше имя успешно обновлено в базе."
 
 NO_PHOTO_ADMIN_NOTIFICATION_TEXT = "{masters} не прислал(и) фото рабочего места."
+
+DISCIPLINE_VIOLATION_BTN = "Нарушения дисциплины"

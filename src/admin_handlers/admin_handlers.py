@@ -6,13 +6,15 @@ from services.admin_services import (
     get_message_from_schedules,
     get_message_from_photos,
     parse_date_from_message_text,
-    get_images_and_messages_for_the_date
+    get_images_and_messages_for_the_date,
+    get_discipline_violation_text
 )
 from static_text.static_text import (
     ADMIN_NO_PHOTO_TEXT,
     USER_IS_NOT_MANAGER,
     DATE_SELECT_TEXT,
-    DATE_ERROR_TEXT
+    DATE_ERROR_TEXT,
+    DISCIPLINE_VIOLATION_BTN
 )
 import logging
 from forms.forms import DateSelectState
@@ -74,4 +76,24 @@ async def get_photos_for_the_date(message: Message, state: FSMContext) -> None:
         photo = FSInputFile(result["image_link"])
         text = result["text"]
         await message.reply_photo(photo=photo, caption=text, reply_markup=admin_keyboard)
+
+
+@admin_handlers_router.message(F.text == DISCIPLINE_VIOLATION_BTN)
+async def get_discipline_violation(message: Message) -> None:
+    logging.info(f"get discipline violation from {message.chat.id}")
+    user = await get_master(message.chat.id)
+    if not user or not user.is_manager:
+        return await message.reply(USER_IS_NOT_MANAGER)
+    text = await get_discipline_violation_text()
+    chunk_size = 4096
+    messages_texts = [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
+    for message_text in messages_texts:
+        m = await message.reply(text=message_text)
+        await m.bot.edit_message_reply_markup(
+            message_id=m.message_id,
+            chat_id=message.chat.id,
+            reply_markup=admin_keyboard,
+        )
+
+    await message.answer(message_text, reply_markup=admin_keyboard)
 

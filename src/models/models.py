@@ -43,3 +43,9 @@ class DayOff(Base):
     master = Column(Integer(), ForeignKey("master.id"))
     date = Column(Date(), nullable=False, default=func.current_date())
 
+
+class DisciplineViolation(Base):
+    __tablename__ = "discipline_violation"
+    id = Column(Integer(), primary_key=True, autoincrement=True)
+    master = Column(Integer(), ForeignKey("master.id"))
+    date = Column(Date(), nullable=False, default=func.current_date())

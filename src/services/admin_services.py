@@ -4,6 +4,10 @@ import pytz
 from db import get_session
 from models.models import Schedule, Master, Image, Department
 from sqlalchemy import select, func
+from .discipline_violation_services import (
+    get_discipline_violations_for_current_month,
+    get_discipline_violations_for_last_month
+)
 
 
 async def get_message_from_schedules(department: int):
@@ -87,3 +91,22 @@ async def get_images_for_the_date(selected_date: datetime):
         result = await session.execute(stmt)
         images = result.all()
     return images
+
+
+async def get_discipline_violation_text():
+    discipline_violations_for_current_month = await get_discipline_violations_for_current_month()
+    if not discipline_violations_for_current_month:
+        this_month_violations = "За данный месяц нет нарушений дисциплины."
+    else:
+        this_month_violations = "Нарушения дисциплины за данный месяц:\n"
+        this_month_violations += "".join(
+            ([f"{violation.date} {violation.name}\n" for violation in discipline_violations_for_current_month]))
+    discipline_violations_for_last_month = await get_discipline_violations_for_last_month()
+    if not discipline_violations_for_last_month:
+        last_month_violations = "За прошлый месяц не было нарушений дисциплины."
+    else:
+        last_month_violations = "Нарушения дисциплины за прошлый месяц:\n"
+        last_month_violations += "".join(
+            ([f"{violation.date} {violation.name}\n" for violation in discipline_violations_for_last_month]))
+
+    return f"{this_month_violations}\n{last_month_violations}"

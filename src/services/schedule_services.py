@@ -31,7 +31,7 @@ async def check_master_names_not_send_photo(start_time, end_time):
             Image.created_at <= end_time,
         )
         day_off_query = select(DayOff.master).filter(DayOff.date == func.current_date())
-        stmt = select(Master.name).filter(
+        stmt = select(Master.name, Master.id).filter(
             ~Master.id.in_(subquery),
             ~Master.id.in_(day_off_query),
             Master.is_manager == False

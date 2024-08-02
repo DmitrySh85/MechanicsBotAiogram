@@ -9,7 +9,8 @@ from static_text.static_text import (
     DAY_OFF_BTN,
     SCHEDULE_BTN,
     WORKPLACE_IMAGE_BTN,
-    SELECTED_DATE_IMAGE_BTN
+    SELECTED_DATE_IMAGE_BTN,
+    DISCIPLINE_VIOLATION_BTN
 )
 
 
@@ -35,7 +36,8 @@ admin_keyboard = ReplyKeyboardMarkup(
                 KeyboardButton(text=WORKPLACE_IMAGE_BTN)
                 ],
                 [
-                KeyboardButton(text=SELECTED_DATE_IMAGE_BTN)
+                KeyboardButton(text=SELECTED_DATE_IMAGE_BTN),
+                KeyboardButton(text=DISCIPLINE_VIOLATION_BTN)
                 ]
             ],
             resize_keyboard=True,
