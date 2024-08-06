@@ -128,6 +128,10 @@ async def handle_update_username(message: Message) -> None:
 @handlers_router.message(F.text == "Приступил к работе")
 async def start_work_handler(message: Message, state: FSMContext) -> None:
     logging.info(f"Start work button from {message.chat.id}")
+    user = await get_master(message.chat.id)
+    user_id = user.id
+    username = message.from_user.full_name
+    await update_username(user_id, username)
     await state.set_state(StartWorkForm.start_work)
     await message.answer(MASTER_START_WORK_TEXT, reply_markup=master_keyboard)
 
@@ -159,6 +163,10 @@ async def process_start_work_image(message: Message, state: FSMContext) -> None:
 async def process_day_off_handler(message: Message) -> None:
     chat_id = message.chat.id
     logging.info(f"Day off message from {chat_id}")
+    user = await get_master(message.chat.id)
+    user_id = user.id
+    username = message.from_user.full_name
+    await update_username(user_id, username)
     await message.answer(DAY_OFF_TEXT, reply_markup=master_keyboard)
     await create_day_off(chat_id)
     username = message.from_user.full_name
