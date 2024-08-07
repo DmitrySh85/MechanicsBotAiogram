@@ -129,6 +129,9 @@ async def handle_update_username(message: Message) -> None:
 async def start_work_handler(message: Message, state: FSMContext) -> None:
     logging.info(f"Start work button from {message.chat.id}")
     user = await get_master(message.chat.id)
+    if not user:
+        await send_registration_request_to_admin(message)
+        return await send_not_registered_message(message)
     user_id = user.id
     username = message.from_user.full_name
     await update_username(user_id, username)
@@ -147,6 +150,10 @@ async def process_start_work_image(message: Message, state: FSMContext) -> None:
 @handlers_router.message(F.text == "Закончил работу")
 async def end_work_handler(message: Message, state: FSMContext) -> None:
     logging.info(f"End work button from {message.chat.id}")
+    user = await get_master(message.chat.id)
+    if not user:
+        await send_registration_request_to_admin(message)
+        return await send_not_registered_message(message)
     await state.set_state(EndWorkForm.end_work)
     await message.answer(MASTER_END_WORK_TEXT, reply_markup=master_keyboard)
 
@@ -164,6 +171,9 @@ async def process_day_off_handler(message: Message) -> None:
     chat_id = message.chat.id
     logging.info(f"Day off message from {chat_id}")
     user = await get_master(message.chat.id)
+    if not user:
+        await send_registration_request_to_admin(message)
+        return await send_not_registered_message(message)
     user_id = user.id
     username = message.from_user.full_name
     await update_username(user_id, username)
