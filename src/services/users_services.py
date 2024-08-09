@@ -65,3 +65,10 @@ async def update_username(user_id: int, username: str) -> None:
         await session.execute(stmt)
         await session.commit()
 
+
+async def get_all_masters_names():
+    async with get_session() as session:
+        stmt = select(Master.name).where(Master.is_manager == False)
+        result = await session.execute(stmt)
+    return result.fetchall()
+

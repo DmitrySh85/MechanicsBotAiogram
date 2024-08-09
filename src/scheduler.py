@@ -1,7 +1,8 @@
 from dispatcher import bot
 from services.schedule_services import (
     check_masters_not_send_photo,
-    check_master_names_not_send_photo
+    check_master_names_not_send_photo,
+    get_monthly_report_text,
 )
 import pytz
 import logging
@@ -49,6 +50,14 @@ async def save_discipline_violation():
         return
     for master in masters:
         await create_discipline_violation(master.id)
+
+
+async def get_monthly_report():
+    logging.info("Get monthly report")
+    message_text = await get_monthly_report_text()
+    managers_chat_ids = await get_manager_tg_ids_from_db()
+    for chat_id in managers_chat_ids:
+        await bot.send_message(chat_id, message_text, reply_markup=admin_keyboard)
 
 
 

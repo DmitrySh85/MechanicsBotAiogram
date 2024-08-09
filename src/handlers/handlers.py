@@ -119,9 +119,7 @@ async def handle_update_username(message: Message) -> None:
     if not user:
         await send_registration_request_to_admin(message)
         return await send_not_registered_message(message)
-    user_id = user.id
     username = message.from_user.full_name
-    await update_username(user_id, username)
     return await message.answer(UPDATE_USERNAME_TEXT.format(username=username))
 
 
@@ -132,9 +130,6 @@ async def start_work_handler(message: Message, state: FSMContext) -> None:
     if not user:
         await send_registration_request_to_admin(message)
         return await send_not_registered_message(message)
-    user_id = user.id
-    username = message.from_user.full_name
-    await update_username(user_id, username)
     await state.set_state(StartWorkForm.start_work)
     await message.answer(MASTER_START_WORK_TEXT, reply_markup=master_keyboard)
 
@@ -174,9 +169,6 @@ async def process_day_off_handler(message: Message) -> None:
     if not user:
         await send_registration_request_to_admin(message)
         return await send_not_registered_message(message)
-    user_id = user.id
-    username = message.from_user.full_name
-    await update_username(user_id, username)
     await message.answer(DAY_OFF_TEXT, reply_markup=master_keyboard)
     await create_day_off(chat_id)
     username = message.from_user.full_name
