@@ -18,7 +18,12 @@ async def get_message_from_schedules(department: int):
 
 async def get_shedules_from_db(department):
     async with get_session() as session:
-        stmt = select(Master.name, Schedule.time_start, Schedule.time_end).join(Master, Schedule.master == Master.id).filter(Master.department == department)
+        stmt = select(Master.name, Schedule.time_start, Schedule.time_end).join(
+            Master, Schedule.master == Master.id
+            ).filter(
+            Master.department == department,
+            Master.is_manager == False
+        )
         result = await session.execute(stmt)
     schedules = result.all()
     return schedules
