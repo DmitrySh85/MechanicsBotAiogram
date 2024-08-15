@@ -19,6 +19,7 @@ from static_text.static_text import (
 import logging
 from forms.forms import DateSelectState
 from keyboards.keyboards import admin_keyboard
+from services.users_services import update_username
 
 
 admin_handlers_router = Router()
@@ -30,6 +31,9 @@ async def get_schedule_for_today(message: Message) -> None:
     user = await get_master(message.chat.id)
     if not user or not user.is_manager:
         return await message.reply(USER_IS_NOT_MANAGER)
+    username = message.from_user.full_name
+    user_id = user.id
+    await update_username(user_id, username)
     department = user.department
     text = await get_message_from_schedules(department)
     await message.reply(text)
@@ -43,6 +47,9 @@ async def get_photos_for_today(message: Message) -> None:
         return await message.reply(USER_IS_NOT_MANAGER)
     department = user.department
     results = await get_message_from_photos(department)
+    user_id = user.id
+    username = message.from_user.full_name
+    await update_username(user_id, username)
     if not results:
         return await message.reply(ADMIN_NO_PHOTO_TEXT)
     for result in results:
@@ -55,6 +62,9 @@ async def get_photos_for_today(message: Message) -> None:
 async def send_date_request(message: Message, state: FSMContext) -> None:
     logging.info(f"Photos for the day from {message.chat.id}")
     user = await get_master(message.chat.id)
+    user_id = user.id
+    username = message.from_user.full_name
+    await update_username(user_id, username)
     if not user or not user.is_manager:
         return await message.reply(USER_IS_NOT_MANAGER)
     await message.reply(DATE_SELECT_TEXT)
@@ -82,6 +92,9 @@ async def get_photos_for_the_date(message: Message, state: FSMContext) -> None:
 async def get_discipline_violation(message: Message) -> None:
     logging.info(f"get discipline violation from {message.chat.id}")
     user = await get_master(message.chat.id)
+    user_id = user.id
+    username = message.from_user.full_name
+    await update_username(user_id, username)
     if not user or not user.is_manager:
         return await message.reply(USER_IS_NOT_MANAGER)
     text = await get_discipline_violation_text()
