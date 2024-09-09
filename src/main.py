@@ -2,7 +2,8 @@ import asyncio
 import logging
 from scheduler import (
     send_reminder_to_masters,
-    send_reminder_to_admins,
+    send_day_reminder_to_admins,
+    send_evening_reminder_to_admins,
     save_discipline_violation,
     get_monthly_report
 )
@@ -23,14 +24,14 @@ admin_notification_time_end = convert_string_to_time_with_offset(END_WORK_TIME, 
 
 
 scheduler.add_job(send_reminder_to_masters, trigger='cron', hour=time_start.hour, minute=time_start.minute, day_of_week='mon-fri')
-scheduler.add_job(send_reminder_to_admins, trigger='cron',
+scheduler.add_job(send_day_reminder_to_admins, trigger='cron',
                   hour=admin_notification_time_start.hour, minute=admin_notification_time_start.minute,
                   day_of_week='mon-fri')
 scheduler.add_job(save_discipline_violation, trigger='cron',
                   hour=admin_notification_time_start.hour, minute=admin_notification_time_start.minute,
                   day_of_week='mon-fri')
 scheduler.add_job(send_reminder_to_masters, trigger='cron', hour=time_end.hour, minute=time_end.minute, day_of_week='mon-fri')
-scheduler.add_job(send_reminder_to_admins, trigger='cron',
+scheduler.add_job(send_evening_reminder_to_admins, trigger='cron',
                   hour=admin_notification_time_end.hour, minute=admin_notification_time_end.minute,
                   day_of_week='mon-fri')
 scheduler.add_job(save_discipline_violation, trigger='cron',

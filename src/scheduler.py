@@ -24,11 +24,27 @@ async def send_reminder_to_masters():
         await bot.send_message(tg_id.tg_id, MISSING_PHOTO_TEXT, reply_markup=master_keyboard)
 
 
-async def send_reminder_to_admins():
+async def send_day_reminder_to_admins():
     logging.info("send_reminder_to_admins")
     tz = pytz.timezone('Europe/Moscow')
     now = datetime.now(tz)
-    start_time = now - timedelta(minutes=45)
+    start_time = now - timedelta(hours=3, minutes=45)
+    masters = await check_master_names_not_send_photo(start_time, now)
+    if not masters:
+        return
+    master_names = ", ".join([master.name for master in masters]).strip()
+    logging.info(f"Не прислали фото: {master_names}")
+    managers_chat_ids = await get_manager_tg_ids_from_db()
+    message_text = NO_PHOTO_ADMIN_NOTIFICATION_TEXT.format(masters=master_names)
+    for chat_id in managers_chat_ids:
+        await bot.send_message(chat_id, message_text, reply_markup=admin_keyboard)
+
+
+async def send_evening_reminder_to_admins():
+    logging.info("send_reminder_to_admins")
+    tz = pytz.timezone('Europe/Moscow')
+    now = datetime.now(tz)
+    start_time = now - timedelta(hours=5, minutes=45)
     masters = await check_master_names_not_send_photo(start_time, now)
     if not masters:
         return
