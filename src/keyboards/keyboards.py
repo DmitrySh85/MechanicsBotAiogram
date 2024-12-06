@@ -10,8 +10,11 @@ from static_text.static_text import (
     SCHEDULE_BTN,
     WORKPLACE_IMAGE_BTN,
     SELECTED_DATE_IMAGE_BTN,
-    DISCIPLINE_VIOLATION_BTN
+    DISCIPLINE_VIOLATION_BTN,
+    GENERAL_CLEANING_BTN,
+    SHIFT_SUPERVISOR_BTN
 )
+from static_data.static_data import GeneralCleaningDict, ShiftSupervisorDict
 
 
 master_keyboard = ReplyKeyboardMarkup(
@@ -24,6 +27,12 @@ master_keyboard = ReplyKeyboardMarkup(
                 ],
                 [
                     KeyboardButton(text=DAY_OFF_BTN)
+                ],
+                [
+                    KeyboardButton(text=GENERAL_CLEANING_BTN)
+                ],
+                [
+                    KeyboardButton(text=SHIFT_SUPERVISOR_BTN)
                 ]
             ],
             resize_keyboard=True,
@@ -43,6 +52,7 @@ admin_keyboard = ReplyKeyboardMarkup(
             resize_keyboard=True,
         )
 
+
 def confirm_registration_kb(user: User) -> InlineKeyboardMarkup:
     """Returns the inline keyboard for confirming a registration request."""
     keyboard = InlineKeyboardMarkup(
@@ -57,6 +67,43 @@ def confirm_registration_kb(user: User) -> InlineKeyboardMarkup:
                     callback_data=f"{registration_reject_callback_data}:{user.id}:{user.username}",
                 ),
             ]
+        ]
+    )
+    return keyboard
+
+
+def general_cleaning_kb(elements: list[GeneralCleaningDict]):
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=element.get('readable_name'),
+                    callback_data=f"gc:{element.get('name')}"
+                )
+            ]
+            for element in elements
+        ]
+    )
+    return keyboard
+
+
+get_another_photo_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Добавить фото", callback_data="add_photo")]
+            ]
+    )
+
+
+def shift_supervisor_kb(elements: list[ShiftSupervisorDict]):
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=element.get('readable_name'),
+                    callback_data=f"shs:{element.get('name')}"
+                )
+            ]
+            for element in elements
         ]
     )
     return keyboard

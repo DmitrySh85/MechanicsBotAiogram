@@ -16,16 +16,38 @@ from static_text.static_text import (
     UPDATE_USERNAME_TEXT,
     DAY_OFF_BTN,
     DAY_OFF_TEXT,
-    DAY_OFF_TEXT_TO_ADMIN
-
+    DAY_OFF_TEXT_TO_ADMIN,
+    GENERAL_CLEANING_BTN,
+    GENERAL_CLEANING_TEXT,
+    GENERAL_CLEANING_FINISH_TEXT,
+    GENERAL_CLEANING_CONTINUE_TEXT,
+    INVALID_ACTION_TEXT,
+    ADD_PHOTO_TEXT,
+    PHOTO_ADDED_SUCCESS_TEXT,
+    SHIFT_SUPERVISOR_BTN,
+    SHIFT_SUPERVISOR_TEXT,
+    SHIFT_SUPERVISOR_FINISH_TEXT,
+    SHIFT_SUPERVISOR_CONTINUE_TEXT
 )
 from services.handlers_services import (
     get_master,
     save_image,
     create_master_and_schedule
     )
-from keyboards.keyboards import master_keyboard, admin_keyboard
-from forms.forms import StartWorkForm, EndWorkForm
+from keyboards.keyboards import (
+    master_keyboard,
+    admin_keyboard,
+    general_cleaning_kb,
+    get_another_photo_kb,
+    shift_supervisor_kb
+)
+from forms.forms import (
+    StartWorkForm,
+    EndWorkForm,
+    GeneralCleaningState,
+    AddPhotoState,
+    ShiftSupervisorState
+)
 import logging
 from senders.senders import (
     send_not_registered_message,
@@ -38,6 +60,9 @@ from services.users_services import (
     get_manager_tg_ids_from_db
 )
 from services.day_off_services import create_day_off
+from services.telegram_services import delete_callback_query_message, delete_message
+from static_data.static_data import GENERAL_CLEANING_CHECKLIST, SHIFT_SUPERVISOR_CHECKLIST
+from copy import deepcopy
 
 
 handlers_router = Router()
@@ -49,12 +74,13 @@ async def command_start_handler(message: Message) -> None:
     user = await get_master(message.chat.id)
     if not user:
         await send_registration_request_to_admin(message)
-        return await send_not_registered_message(message)
+        await send_not_registered_message(message)
+        return
 
     if user.is_manager:
-        return await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{ADMIN_START_TEXT}",
+        await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{ADMIN_START_TEXT}",
                              reply_markup=admin_keyboard)
-
+        return
     await message.answer(f"Добрый день, {html.bold(message.from_user.full_name)}!\n{MASTER_START_TEXT}",
                          reply_markup=master_keyboard)
 
@@ -106,6 +132,7 @@ async def handle_register_rejection(callback_query: CallbackQuery):
         chat_id=user_id, text=REGISTRATION_REJECT_MESSAGE
     )
 
+
 @handlers_router.message(Command("chat"))
 async def send_telegram_id(message: Message) -> None:
     logging.info(f"Chat id request from {message.chat.id}")
@@ -118,9 +145,10 @@ async def handle_update_username(message: Message) -> None:
     user = await get_master(message.chat.id)
     if not user:
         await send_registration_request_to_admin(message)
-        return await send_not_registered_message(message)
+        await send_not_registered_message(message)
+        return
     username = message.from_user.full_name
-    return await message.answer(UPDATE_USERNAME_TEXT.format(username=username))
+    await message.answer(UPDATE_USERNAME_TEXT.format(username=username))
 
 
 @handlers_router.message(F.text == "Приступил к работе")
@@ -168,7 +196,8 @@ async def process_day_off_handler(message: Message) -> None:
     user = await get_master(message.chat.id)
     if not user:
         await send_registration_request_to_admin(message)
-        return await send_not_registered_message(message)
+        await send_not_registered_message(message)
+        return
     await message.answer(DAY_OFF_TEXT, reply_markup=master_keyboard)
     await create_day_off(chat_id)
     username = message.from_user.full_name
@@ -178,3 +207,211 @@ async def process_day_off_handler(message: Message) -> None:
         await message.bot.send_message(manager_id, message_text, reply_markup=admin_keyboard)
 
 
+@handlers_router.message(F.text == GENERAL_CLEANING_BTN)
+async def process_general_cleaning_btn(message: Message, state: FSMContext) -> None:
+    user = await get_master(message.chat.id)
+    if not user:
+        await send_registration_request_to_admin(message)
+        await send_not_registered_message(message)
+        return
+    await state.set_state(GeneralCleaningState.general_cleaning)
+    elements = deepcopy(GENERAL_CLEANING_CHECKLIST)
+
+    reply_markup = general_cleaning_kb(elements)
+    response = await message.answer(GENERAL_CLEANING_TEXT, reply_markup=reply_markup)
+    message_id = response.message_id
+    await state.update_data(elements=elements, message_id=message_id)
+
+
+@handlers_router.callback_query(F.data.startswith("gc:"), GeneralCleaningState.general_cleaning)
+async def change_cleaning_photo_expectation_message(
+        callback_query: CallbackQuery,
+        state: FSMContext
+) -> None:
+    action = callback_query.data.split(":")[1]
+    data = await state.get_data()
+
+    message_id = data.get("message_id")
+    await delete_callback_query_message(callback_query, message_id)
+
+    elements = data.get("elements")
+    current_element = list(filter(lambda x: x.get("name") == action, elements))[0]
+
+    text = current_element.get("text")
+    response = await callback_query.message.answer(text=text)
+    logging.info(response)
+    message_id = response.message_id
+    await state.update_data(action=action, message_id=message_id)
+
+
+@handlers_router.message(F.photo, GeneralCleaningState.general_cleaning)
+async def process_cleaning_photo(message: Message, state: FSMContext):
+
+    await save_image(message)
+
+    data = await state.get_data()
+    message_id = data.get("message_id")
+    await delete_message(message, message_id)
+
+    elements = data.get("elements")
+    action = data.get("action")
+
+    try:
+        current_element = list(filter(lambda x: x.get("name") == action, elements))[0]
+    except IndexError as e:
+        logging.debug(e)
+        text = INVALID_ACTION_TEXT
+        await message.answer(text=text, reply_markup=general_cleaning_kb(elements))
+        return
+
+    elements.remove(current_element)
+
+    if not elements:
+        text = GENERAL_CLEANING_FINISH_TEXT
+        reply_markup = get_another_photo_kb
+        await message.answer(text=text, reply_markup=reply_markup)
+        await state.clear()
+        return
+    reply_markup = general_cleaning_kb(elements)
+    response = await message.answer(GENERAL_CLEANING_CONTINUE_TEXT, reply_markup=reply_markup)
+    message_id = response.message_id
+    await state.update_data(elements=elements, message_id=message_id)
+
+
+@handlers_router.message(GeneralCleaningState.general_cleaning)
+async def process_invalid_message(message: Message, state: FSMContext):
+    data = await state.get_data()
+
+    message_id = data.get("message_id")
+    await delete_message(message, message_id)
+
+    elements = data.get("elements")
+    text = INVALID_ACTION_TEXT
+
+    reply_markup = general_cleaning_kb(elements)
+    response = await message.answer(
+            text=text,
+            reply_markup=reply_markup
+        )
+    await state.update_data(message_id=response.message_id)
+
+
+@handlers_router.callback_query(F.data == "add_photo")
+async def process_add_photo_button(callback_query, state: FSMContext) -> None:
+    message_id = callback_query.message.message_id
+    await delete_callback_query_message(callback_query, message_id)
+    await state.set_state(AddPhotoState.add_photo)
+    response = await callback_query.message.answer(ADD_PHOTO_TEXT)
+    await state.update_data(message_id=response.message_id)
+
+
+@handlers_router.message(F.photo, AddPhotoState.add_photo)
+async def process_additional_photo(message: Message, state: FSMContext) -> None:
+    await save_image(message)
+    data = await state.get_data()
+    message_id = data.get("message_id")
+    await delete_message(message, message_id)
+    await message.answer(PHOTO_ADDED_SUCCESS_TEXT, reply_markup=get_another_photo_kb)
+
+
+@handlers_router.message(AddPhotoState.add_photo)
+async def process_invalid_message(message: Message, state: FSMContext):
+    data = await state.get_data()
+
+    message_id = data.get("message_id")
+    await delete_message(message, message_id)
+
+    text = INVALID_ACTION_TEXT
+
+    response = await message.answer(
+            text=text,
+        )
+    await state.update_data(message_id=response.message_id)
+
+
+#Shift Supervisor starts from here
+
+@handlers_router.message(F.text == SHIFT_SUPERVISOR_BTN)
+async def process_general_cleaning_btn(message: Message, state: FSMContext) -> None:
+    user = await get_master(message.chat.id)
+    if not user:
+        await send_registration_request_to_admin(message)
+        await send_not_registered_message(message)
+        return
+    await state.set_state(ShiftSupervisorState.shift_supervisor)
+    elements = deepcopy(SHIFT_SUPERVISOR_CHECKLIST)
+
+    reply_markup = shift_supervisor_kb(elements)
+    response = await message.answer(SHIFT_SUPERVISOR_TEXT, reply_markup=reply_markup)
+    message_id = response.message_id
+    await state.update_data(elements=elements, message_id=message_id)
+
+
+@handlers_router.callback_query(F.data.startswith("shs:"), ShiftSupervisorState.shift_supervisor)
+async def change_shift_photo_expectation_message(
+        callback_query: CallbackQuery,
+        state: FSMContext
+) -> None:
+    action = callback_query.data.split(":")[1]
+    data = await state.get_data()
+
+    message_id = data.get("message_id")
+    await delete_callback_query_message(callback_query, message_id)
+
+    elements = data.get("elements")
+    current_element = list(filter(lambda x: x.get("name") == action, elements))[0]
+
+    text = current_element.get("text")
+    response = await callback_query.message.answer(text=text)
+    logging.info(response)
+    message_id = response.message_id
+    await state.update_data(action=action, message_id=message_id)
+
+
+@handlers_router.message(F.photo, ShiftSupervisorState.shift_supervisor)
+async def process_shift_photo(message: Message, state: FSMContext):
+
+    await save_image(message)
+
+    data = await state.get_data()
+    message_id = data.get("message_id")
+    await delete_message(message, message_id)
+
+    elements = data.get("elements")
+    action = data.get("action")
+
+    try:
+        current_element = list(filter(lambda x: x.get("name") == action, elements))[0]
+    except IndexError as e:
+        logging.debug(e)
+        text = INVALID_ACTION_TEXT
+        response = await message.answer(text=text, reply_markup=shift_supervisor_kb(elements))
+        return
+
+    elements.remove(current_element)
+
+    if not elements:
+        text = SHIFT_SUPERVISOR_FINISH_TEXT
+        reply_markup = get_another_photo_kb
+        await message.answer(text=text, reply_markup=reply_markup)
+        await state.clear()
+        return
+    reply_markup = shift_supervisor_kb(elements)
+    response = await message.answer(SHIFT_SUPERVISOR_CONTINUE_TEXT, reply_markup=reply_markup)
+    message_id = response.message_id
+    await state.update_data(elements=elements, message_id=message_id)
+
+
+@handlers_router.message(ShiftSupervisorState.shift_supervisor)
+async def process_shift_invalid_message(message: Message, state: FSMContext):
+    data = await state.get_data()
+
+    elements = data.get("elements")
+    text = INVALID_ACTION_TEXT
+
+    reply_markup = shift_supervisor_kb(elements)
+    response = await message.answer(
+            text=text,
+            reply_markup=reply_markup
+        )
+    await state.update_data(message_id=response.message_id)

@@ -7,14 +7,17 @@ from db import get_session
 from models.models import Master, Image, Schedule
 from sqlalchemy import select, insert
 from settings import START_WORK_TIME, END_WORK_TIME
-
+import logging
 
 
 async def save_image(message: Message):
-    image_link = await save_image_to_hdd(message)
-    chat_id = message.chat.id
-    master_id = await get_master_id_from_chat_id(chat_id)
-    await add_image_link_to_db(image_link, master_id)
+    try:
+        image_link = await save_image_to_hdd(message)
+        chat_id = message.chat.id
+        master_id = await get_master_id_from_chat_id(chat_id)
+        await add_image_link_to_db(image_link, master_id)
+    except Exception as e:
+        logging.info(e)
 
 
 async def save_image_to_hdd(message):
@@ -87,6 +90,7 @@ async def create_schedule_for_master(created_master_id):
 
 def convert_string_to_time(string: str) ->time:
     return time(hour=int(string[0:2]), minute=int(string[3:5]))
+
 
 def convert_string_to_time_with_offset(string: str, offset: str) -> time:
     t = datetime.strptime(string, '%H:%M:%S')

@@ -1,6 +1,6 @@
 .env
 .venv/
-images
+images/
 .idea/
 __pycache__/
 *.log
