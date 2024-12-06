@@ -11,3 +11,15 @@ class EndWorkForm(StatesGroup):
 
 class DateSelectState(StatesGroup):
     date_select = State()
+
+
+class GeneralCleaningState(StatesGroup):
+    general_cleaning = State()
+
+
+class AddPhotoState(StatesGroup):
+    add_photo = State()
+
+
+class ShiftSupervisorState(StatesGroup):
+    shift_supervisor = State()
