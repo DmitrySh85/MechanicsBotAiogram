@@ -38,8 +38,8 @@ GENERAL_CLEANING_CHECKLIST = [
 
 SHIFT_SUPERVISOR_CHECKLIST = [
     {
-        "name": "compressors",
-        "readable_name": "Компрессора",
+        "name": "compressor",
+        "readable_name": "Компрессор поршневой",
         "text": "Проведенные работы - слив конденсата, замена масла и натяжка ремней. Загрузите фото результата "
                 "проведенных работ."
     },
@@ -49,24 +49,29 @@ SHIFT_SUPERVISOR_CHECKLIST = [
         "text": "Выявление неисправных инструментов. Отправьте фото."
     },
     {
-        "name": "barrels_wall",
-        "readable_name": "Стена бочек",
-        "text": "Сфотографируйте стену бочек."
+        "name": "barrels_stand",
+        "readable_name": "Стенд бочек",
+        "text": "Сфотографируйте стенд бочек."
     },
     {
-        "name": "tire_fitting_wall",
-        "readable_name": "Стена шиномонтажа",
-        "text": "Сфотографируйте стену шиномонтажа"
+        "name": "tire_fitting_stand",
+        "readable_name": "Стенд шиномонтажа",
+        "text": "Сфотографируйте стенд шиномонтажа и отправьте фото."
     },
     {
-        "name": "tire_fitting_wall_two",
-        "readable_name": "Стена шиномонтажа 2",
-        "text": "Сфотографируйте вторую стену шиномонтажа"
+        "name": "balance_stand",
+        "readable_name": "Балансировочный стенд",
+        "text": "Сфотографируйте балансировочный стенд и отправьте фото."
+    },
+    {
+        "name": "vulcanisator",
+        "readable_name": "Вулканизатор",
+        "text": "Пожалуйста сфотографируйте вулканизатор и отправьте фото сюда."
     },
     {
         "name": "washing",
-        "readable_name": "Мойка",
-        "text": "Сфотографируйте мойку и отправьте фото."
+        "readable_name": "Мойка колес",
+        "text": "Сфотографируйте мойку колес и отправьте фото."
     },
     {
         "name": "workbench",
