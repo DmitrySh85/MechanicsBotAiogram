@@ -18,7 +18,8 @@ async def check_masters_not_send_photo(start_time, end_time):
         stmt = select(Master.tg_id).filter(
             ~Master.id.in_(subquery),
             ~Master.id.in_(day_off_query),
-            Master.is_manager == False
+            Master.is_manager == False,
+            Master.is_blocked == False
                              )
         result = await session.execute(stmt)
     masters_not_send_photo = result.fetchall()
@@ -37,7 +38,8 @@ async def check_master_names_not_send_photo(start_time, end_time):
         stmt = select(Master.name, Master.id).filter(
             ~Master.id.in_(subquery),
             ~Master.id.in_(day_off_query),
-            Master.is_manager == False
+            Master.is_manager == False,
+            Master.is_blocked == False
                              )
         result = await session.execute(stmt)
     masters_not_send_photo = result.fetchall()
