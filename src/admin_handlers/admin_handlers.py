@@ -30,7 +30,8 @@ async def get_schedule_for_today(message: Message) -> None:
     logging.info(f"Schedule for today from {message.chat.id}")
     user = await get_master(message.chat.id)
     if not user or not user.is_manager:
-        return await message.reply(USER_IS_NOT_MANAGER)
+        await message.reply(USER_IS_NOT_MANAGER)
+        return
     username = message.from_user.full_name
     user_id = user.id
     await update_username(user_id, username)
@@ -44,14 +45,16 @@ async def get_photos_for_today(message: Message) -> None:
     logging.info(f"Photos for today from {message.chat.id}")
     user = await get_master(message.chat.id)
     if not user or not user.is_manager:
-        return await message.reply(USER_IS_NOT_MANAGER)
+        await message.reply(USER_IS_NOT_MANAGER)
+        return
     department = user.department
     results = await get_message_from_photos(department)
     user_id = user.id
     username = message.from_user.full_name
     await update_username(user_id, username)
     if not results:
-        return await message.reply(ADMIN_NO_PHOTO_TEXT)
+        await message.reply(ADMIN_NO_PHOTO_TEXT)
+        return
     for result in results:
         photo = FSInputFile(result["image_link"])
         text = result["text"]
@@ -66,7 +69,8 @@ async def send_date_request(message: Message, state: FSMContext) -> None:
     username = message.from_user.full_name
     await update_username(user_id, username)
     if not user or not user.is_manager:
-        return await message.reply(USER_IS_NOT_MANAGER)
+        await message.reply(USER_IS_NOT_MANAGER)
+        return
     await message.reply(DATE_SELECT_TEXT)
     await state.set_state(DateSelectState.date_select)
 
@@ -78,10 +82,12 @@ async def get_photos_for_the_date(message: Message, state: FSMContext) -> None:
         date = parse_date_from_message_text(message.text)
     except ValueError as e:
         logging.error(e)
-        return await message.reply(DATE_ERROR_TEXT, reply_markup=admin_keyboard)
+        await message.reply(DATE_ERROR_TEXT, reply_markup=admin_keyboard)
+        return
     results = await get_images_and_messages_for_the_date(date)
     if not results:
-        return await message.reply(ADMIN_NO_PHOTO_TEXT)
+        await message.reply(ADMIN_NO_PHOTO_TEXT)
+        return
     for result in results:
         photo = FSInputFile(result["image_link"])
         text = result["text"]
@@ -96,7 +102,8 @@ async def get_discipline_violation(message: Message) -> None:
     username = message.from_user.full_name
     await update_username(user_id, username)
     if not user or not user.is_manager:
-        return await message.reply(USER_IS_NOT_MANAGER)
+        await message.reply(USER_IS_NOT_MANAGER)
+        return
     text = await get_discipline_violation_text()
     chunk_size = 4096
     messages_texts = [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
