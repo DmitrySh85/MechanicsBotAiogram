@@ -1,32 +1,72 @@
 from datetime import date, datetime
+from time import strptime
+from typing import List
 
 import pytz
 from db import get_session
 from models.models import Schedule, Master, Image, Department
-from sqlalchemy import select, func
+from sqlalchemy import select, func, exists, insert
 from .discipline_violation_services import (
     get_discipline_violations_for_current_month,
     get_discipline_violations_for_last_month
 )
+from settings import START_WORK_TIME, END_WORK_TIME
 
 
 async def get_message_from_schedules(department: int):
-    schedules = await get_shedules_from_db(department)
+    schedules = await get_schedules_from_db(department)
     message_text = await transfer_schedules_to_message_text(schedules)
     return message_text
 
 
-async def get_shedules_from_db(department):
+async def get_schedules_from_db(department: int) -> List[Schedule]:
+    await create_missing_schedules(department)
     async with get_session() as session:
         stmt = select(Master.name, Schedule.time_start, Schedule.time_end).join(
             Master, Schedule.master == Master.id
             ).filter(
             Master.department == department,
-            Master.is_manager == False
+            Master.is_manager == False,
+            Master.is_blocked == False
         )
         result = await session.execute(stmt)
     schedules = result.all()
     return schedules
+
+
+async def create_missing_schedules(department: int) -> None:
+    no_schedule_masters = await get_no_schedule_masters(department)
+    if no_schedule_masters:
+        await create_schedules_for_masters(no_schedule_masters)
+
+
+async def get_no_schedule_masters(department: int) -> List[int]:
+    async with get_session() as session:
+        subquery = select(
+            Master.id).join(Schedule, Master.id == Schedule.master)
+        stmt = select(
+            Master.id).where(Master.id.not_in(subquery)
+                    ).filter(
+            Master.is_blocked == False,
+            Master.is_manager == False,
+            Master.is_manager == False
+                                       )
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+
+async def create_schedules_for_masters(masters: List[int]) -> None:
+    async with get_session() as session:
+        for master in masters:
+            start_time = datetime.strptime(START_WORK_TIME, "%H:%M:%S").time()
+            end_time = datetime.strptime(END_WORK_TIME, "%H:%M:%S").time()
+            stmt = insert(Schedule).values(
+                master=master,
+                time_start=start_time,
+                time_end=end_time,
+            )
+            await session.execute(stmt)
+            await session.commit()
 
 
 async def transfer_schedules_to_message_text(querys):
@@ -39,7 +79,7 @@ async def transfer_schedules_to_message_text(querys):
     return message_text
 
 
-async def get_message_from_photos(department):
+async def get_message_from_photos(department: int):
     today = date.today()
     start_of_day = datetime.combine(today, datetime.min.time())
     end_of_day = datetime.combine(today, datetime.max.time())
