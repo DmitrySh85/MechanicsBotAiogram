@@ -148,6 +148,8 @@ async def handle_update_username(message: Message) -> None:
         await send_not_registered_message(message)
         return
     username = message.from_user.full_name
+    user_id = user.id
+    await update_username(user_id, username)
     await message.answer(UPDATE_USERNAME_TEXT.format(username=username))
 
 
@@ -328,8 +330,6 @@ async def process_invalid_message(message: Message, state: FSMContext):
         )
     await state.update_data(message_id=response.message_id)
 
-
-#Shift Supervisor starts from here
 
 @handlers_router.message(F.text == SHIFT_SUPERVISOR_BTN)
 async def process_general_cleaning_btn(message: Message, state: FSMContext) -> None:
