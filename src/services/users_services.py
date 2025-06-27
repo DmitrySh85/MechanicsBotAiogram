@@ -7,6 +7,7 @@ from sqlalchemy import update, select
 
 async def register_user(tg_id: int, username: str):
     master = await get_master(tg_id)
+    print("MASTER", master)
     if not master:
         await insert_master_to_db(tg_id, username)
     else:
@@ -22,6 +23,7 @@ async def insert_master_to_db(tg_id: int, username: str):
         )
         session.add(master)
         await session.commit()
+        await session.refresh(master)
 
 
 async def reject_user(tg_id: int, username: str):

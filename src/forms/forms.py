@@ -23,3 +23,15 @@ class AddPhotoState(StatesGroup):
 
 class ShiftSupervisorState(StatesGroup):
     shift_supervisor = State()
+
+
+class MastersSelectState(StatesGroup):
+    master_select = State()
+
+
+class VacationSelectState(StatesGroup):
+    vacation_select = State()
+
+
+class DayOffSelectState(StatesGroup):
+    day_off_select = State()

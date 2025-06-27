@@ -9,8 +9,9 @@ import logging
 async def check_masters_not_send_photo(start_time, end_time):
     async with get_session() as session:
         subquery = select(
-            Master.id).join(Image, Image.master == Master.id
-                            ).filter(
+            Master.id).join(
+            Image, Image.master == Master.id
+            ).filter(
             Image.created_at >= start_time,
             Image.created_at <= end_time,
         )

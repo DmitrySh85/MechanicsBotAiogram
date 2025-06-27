@@ -53,6 +53,7 @@ async def get_master(chat_id: int):
         result = await session.scalar(stmt)
         return result
 
+
 async def create_master_and_schedule(message: Message):
     name = message.from_user.full_name
     chat_id = message.chat.id

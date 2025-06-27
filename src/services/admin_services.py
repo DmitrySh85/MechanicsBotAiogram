@@ -4,8 +4,8 @@ from typing import List
 
 import pytz
 from db import get_session
-from models.models import Schedule, Master, Image, Department
-from sqlalchemy import select, func, exists, insert
+from models.models import Schedule, Master, Image, Department, DayOff, DisciplineViolation
+from sqlalchemy import select, func, exists, insert, delete
 from .discipline_violation_services import (
     get_discipline_violations_for_current_month,
     get_discipline_violations_for_last_month
@@ -14,24 +14,26 @@ from settings import START_WORK_TIME, END_WORK_TIME
 
 
 async def get_message_from_schedules(department: int):
-    schedules = await get_schedules_from_db(department)
-    message_text = await transfer_schedules_to_message_text(schedules)
+    working_masters_names = await get_working_masters_names()
+    message_text = transfer_working_masters_names_to_message_text(working_masters_names)
     return message_text
 
 
-async def get_schedules_from_db(department: int) -> List[Schedule]:
-    await create_missing_schedules(department)
+async def get_working_masters_names() -> List[str]:
+    today = datetime.today().date()
     async with get_session() as session:
-        stmt = select(Master.name, Schedule.time_start, Schedule.time_end).join(
-            Master, Schedule.master == Master.id
-            ).filter(
-            Master.department == department,
+        subquery = select(DayOff.master).where(DayOff.date == today)
+        stmt = select(Master.name).filter(
             Master.is_manager == False,
-            Master.is_blocked == False
+            Master.is_blocked == False,
+            ~Master.id.in_(subquery)
         )
         result = await session.execute(stmt)
-    schedules = result.all()
-    return schedules
+        return result.scalars().all()
+
+def transfer_working_masters_names_to_message_text(working_masters_names) -> str:
+    message_text = "Сегодня работают:\n" + "\n".join(working_masters_names)
+    return message_text
 
 
 async def create_missing_schedules(department: int) -> None:
@@ -67,16 +69,6 @@ async def create_schedules_for_masters(masters: List[int]) -> None:
             )
             await session.execute(stmt)
             await session.commit()
-
-
-async def transfer_schedules_to_message_text(querys):
-    message_text = ""
-    for query in querys:
-        master_name = query[0]
-        time_start = query[1].strftime("%H:%M")
-        time_end = query[2].strftime("%H:%M")
-        message_text += f"Мастер {master_name} начинает смену в {time_start}, заканчивает в {time_end}.\n"
-    return message_text
 
 
 async def get_message_from_photos(department: int):
@@ -155,3 +147,49 @@ async def get_discipline_violation_text():
             ([f"{violation.date} {violation.name}\n" for violation in discipline_violations_for_last_month]))
 
     return f"{this_month_violations}\n{last_month_violations}"
+
+
+async def get_available_masters() -> dict[int, str]:
+    async with get_session() as session:
+        stmt = select(Master.id, Master.name).where(
+            Master.is_blocked == False,
+            Master.is_manager == False
+        )
+        result = await session.execute(stmt)
+        return {r.id: r.name for r in result.fetchall()}
+
+
+async def delete_selected_masters(masters_ids: list[int]) -> None:
+    async with get_session() as session:
+        stmt = delete(Schedule).where(Schedule.master.in_(masters_ids))
+        await session.execute(stmt)
+        await session.commit()
+
+        stmt = delete(DayOff).where(DayOff.master.in_(masters_ids))
+        await session.execute(stmt)
+        await session.commit()
+
+        stmt = delete(Image).where(Image.master.in_(masters_ids))
+        await session.execute(stmt)
+        await session.commit()
+
+        stmt = delete(DisciplineViolation).where(DisciplineViolation.master.in_(masters_ids))
+        await session.execute(stmt)
+        await session.commit()
+
+        stmt = delete(Master).where(Master.id.in_(masters_ids))
+        await session.execute(stmt)
+        await session.commit()
+
+
+async def get_working_masters_chats_ids() -> list[int]:
+    today = datetime.today().date()
+    async with get_session() as session:
+        subquery = select(DayOff.master).where(DayOff.date == today)
+        stmt = select(Master.tg_id).filter(
+            Master.is_blocked == False,
+            ~Master.id.in_(subquery),
+            Master.is_manager == False
+        )
+        result = await session.execute(stmt)
+        return result.scalars().all()
