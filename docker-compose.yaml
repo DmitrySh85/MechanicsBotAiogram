@@ -3,9 +3,12 @@ services:
   app:
     build:
       context: .
+      args:
+        - UID=${DOCKER_UID:-1000}
+        - GID=${DOCKER_GID:-1000}
     env_file: .env
     container_name: mechanics_bot
-    command: [ "./docker/app.sh" ]
+    command: sh -c "alembic upgrade head && cd ./src && python3 main.py"
     volumes:
       - .:/mechanics_bot
     restart: always

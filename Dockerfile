@@ -1,15 +1,23 @@
-FROM python:3.11
+FROM python:3.11-alpine
 
-RUN pip install --upgrade pip
+# Define build-time arguments for UID and GID
+ARG UID=1000
+ARG GID=1000
 
-RUN useradd -rms /bin/bash dev && chmod 777 /opt /run
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-WORKDIR /mechanics_bot
+# Create a non-root user with specific UID and GID
+RUN addgroup -g ${GID} prod && \
+    adduser -u ${UID} -G prod -s /bin/sh -D prod
 
-RUN chown -R dev:dev /mechanics_bot && chmod 755 /mechanics_bot
+WORKDIR /MechanicsBotAiogram
 
-COPY requirements.txt .
+RUN chown -R ${UID}:${GID} /MechanicsBotAiogram && chmod 755 /MechanicsBotAiogram
+
+COPY --chown=${UID}:${GID} requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY --chown=dev:dev . .
+COPY --chown=${UID}:${GID} . .
