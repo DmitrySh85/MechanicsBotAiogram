@@ -1,5 +1,6 @@
+from datetime import datetime
+
 from aiogram import Router, F
-from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile, CallbackQuery
 from services.handlers_services import get_master
@@ -24,7 +25,10 @@ from static_text.static_text import (
     MASTER_DELETE_CHOOSE_TEXT,
     MASTERS_SELECT_CANCELLED_TEXT,
     GENERAL_CLEANING_BTN,
-    GENERAL_CLEANING
+    GENERAL_CLEANING,
+    GENERAL_CLEANING_SELECT_TEXT,
+    GENERAL_CLEANING_DATE_ERROR_TEXT,
+    GENERAL_CLEANING_SCHEDULED_MESSAGE
 )
 import logging
 from forms.forms import DateSelectState, MastersSelectState
@@ -34,6 +38,9 @@ from keyboards.keyboards import (
     general_cleaning_start_kb
 )
 from services.users_services import update_username
+from services.general_cleaning_services import get_or_create_general_cleaning
+from forms.forms import GeneralCleaningState
+from senders.senders import send_general_cleaning_message
 
 
 admin_handlers_router = Router()
@@ -70,9 +77,8 @@ async def get_photos_for_today(message: Message) -> None:
         await message.reply(ADMIN_NO_PHOTO_TEXT)
         return
     for result in results:
-        photo = FSInputFile(result["image_link"])
-        text = result["text"]
-        await message.reply_photo(photo=photo, caption=text, reply_markup=admin_keyboard)
+        photo = FSInputFile(result["link"])
+        await message.reply_photo(photo=photo, reply_markup=admin_keyboard)
 
 
 @admin_handlers_router.message(F.text == "Фото за выбранный день")
@@ -212,17 +218,24 @@ async def finish_master_choose(callback_query: CallbackQuery, state: FSMContext)
 
 @admin_handlers_router.message(F.text == GENERAL_CLEANING_BTN)
 async def init_general_cleaning(message: Message, state: FSMContext) -> None:
-    masters_chats_ids = await get_working_masters_chats_ids()
-    for master in masters_chats_ids:
-        try:
-            await message.bot.send_message(
-                text=GENERAL_CLEANING,
-                chat_id=master,
-                reply_markup=general_cleaning_start_kb()
-            )
-        except TelegramBadRequest as e:
-            logging.debug(f"{e}: {master}")
-            continue
-    await message.reply(
-        "Генеральная уборка назначена на сегодня."
-    )
+    await state.set_state(GeneralCleaningState.general_cleaning_select_date)
+    await message.answer(GENERAL_CLEANING_SELECT_TEXT)
+
+
+@admin_handlers_router.message(F.text, GeneralCleaningState.general_cleaning_select_date)
+async def create_general_cleaning(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    try:
+        date = parse_date_from_message_text(message.text)
+    except ValueError as e:
+        logging.error(e)
+        await message.reply(DATE_ERROR_TEXT, reply_markup=admin_keyboard)
+        return
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    if date < today:
+        await message.reply(GENERAL_CLEANING_DATE_ERROR_TEXT, reply_markup=admin_keyboard)
+        return
+    elif date == today:
+        await send_general_cleaning_message(message.bot, date)
+
+    await get_or_create_general_cleaning(date)

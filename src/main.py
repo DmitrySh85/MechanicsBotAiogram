@@ -6,7 +6,8 @@ from scheduler import (
     send_day_reminder_to_admins,
     send_evening_reminder_to_admins,
     save_discipline_violation,
-    get_monthly_report
+    get_monthly_report,
+    check_general_cleaning_and_send_messages
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from settings import START_WORK_TIME, END_WORK_TIME, REMINDER_OFFSET, ADMIN_NOTIFICATION_DELAY
@@ -55,13 +56,18 @@ scheduler.add_job(
     hour=admin_notification_time_end.hour,
     minute=admin_notification_time_end.minute,
 )
-
 scheduler.add_job(
     get_monthly_report,
     trigger='cron',
     hour=10,
     minute=0,
     day=1
+)
+scheduler.add_job(
+    check_general_cleaning_and_send_messages,
+    trigger='cron',
+    hour=10,
+    minute=1
 )
 
 

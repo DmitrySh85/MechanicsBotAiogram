@@ -14,10 +14,10 @@ async def create_day_off(chat_id: int) -> None:
         await session.commit()
 
 
-async def create_vacation(master_id: int) -> None:
+async def create_vacation(master_id: int, vacation_length: int) -> None:
     today = datetime.today().date()
     async with get_session() as session:
-        for day in range(1, 15):
+        for day in range(1, vacation_length + 1):
             d = today + timedelta(days=day)
             stmt = insert(DayOff).values(master=master_id, date=d)
             await session.execute(stmt)

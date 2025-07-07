@@ -14,6 +14,7 @@ class DateSelectState(StatesGroup):
 
 
 class GeneralCleaningState(StatesGroup):
+    general_cleaning_select_date = State()
     general_cleaning = State()
 
 

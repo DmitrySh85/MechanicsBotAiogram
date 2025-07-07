@@ -11,6 +11,8 @@ from static_text.static_text import MISSING_PHOTO_TEXT, NO_PHOTO_ADMIN_NOTIFICAT
 from keyboards.keyboards import master_keyboard, admin_keyboard
 from services.users_services import get_manager_tg_ids_from_db
 from services.discipline_violation_services import create_discipline_violation
+from services.general_cleaning_services import get_general_cleaning
+from senders.senders import send_general_cleaning_message
 
 
 async def send_reminder_to_masters():
@@ -77,5 +79,10 @@ async def get_monthly_report():
 
 
 
-
+async def check_general_cleaning_and_send_messages():
+    logging.info("Check general cleaning")
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    general_cleaning = await get_general_cleaning(today)
+    if general_cleaning:
+        await send_general_cleaning_message(bot, today)
 

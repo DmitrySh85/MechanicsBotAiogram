@@ -81,6 +81,7 @@ from services.day_off_services import (
 from services.telegram_services import delete_callback_query_message, delete_message
 from static_data.static_data import GENERAL_CLEANING_CHECKLIST, SHIFT_SUPERVISOR_CHECKLIST
 from copy import deepcopy
+from services.general_cleaning_services import send_general_cleaning_photos_to_admin
 
 
 handlers_router = Router()
@@ -89,7 +90,7 @@ handlers_router = Router()
 @handlers_router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     logging.info(f"Start command from {message.chat.id}")
-    user = await get_master(message.chat.id)
+    user = await get_master(message.from_user.id)
     if not user:
         await send_registration_request_to_admin(message)
         await send_not_registered_message(message)
@@ -338,6 +339,7 @@ async def process_cleaning_photo(message: Message, state: FSMContext):
         reply_markup = get_another_photo_kb
         await message.answer(text=text, reply_markup=reply_markup)
         await state.clear()
+        await send_general_cleaning_photos_to_admin(message.bot, message.from_user.id)
         return
     reply_markup = general_cleaning_kb(elements)
     response = await message.answer(GENERAL_CLEANING_CONTINUE_TEXT, reply_markup=reply_markup)
@@ -503,8 +505,10 @@ async def cancel_vacation(callback_query: CallbackQuery, state: FSMContext) -> N
     await callback_query.answer()
 
 
-@handlers_router.callback_query(F.data == "start_vacation", VacationSelectState.vacation_select)
+@handlers_router.callback_query(F.data.startswith("start_vacation"), VacationSelectState.vacation_select)
 async def start_vacation(callback_query: CallbackQuery, state: FSMContext) -> None:
+    callback_data = callback_query.data.split(":")
+    vacation_length = int(callback_data[1])
     data = await state.get_data()
     message_id = data.get("message_id")
     await delete_callback_query_message(callback_query, message_id)
@@ -512,7 +516,7 @@ async def start_vacation(callback_query: CallbackQuery, state: FSMContext) -> No
 
     master = await get_master(callback_query.message.chat.id)
     master_id = master.id
-    await create_vacation(master_id)
+    await create_vacation(master_id, vacation_length)
 
     await callback_query.message.answer(VACATION_START_TEXT)
     await callback_query.answer()

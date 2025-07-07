@@ -5,7 +5,7 @@ from typing import List
 import pytz
 from db import get_session
 from models.models import Schedule, Master, Image, Department, DayOff, DisciplineViolation
-from sqlalchemy import select, func, exists, insert, delete
+from sqlalchemy import select, func, exists, insert, delete, desc
 from .discipline_violation_services import (
     get_discipline_violations_for_current_month,
     get_discipline_violations_for_last_month
@@ -130,6 +130,21 @@ async def get_images_for_the_date(selected_date: datetime):
     return images
 
 
+async def get_last_images(
+        master_id: int,
+        limit: int
+) -> list[str]:
+    async with get_session() as session:
+        stmt = select(Image.link, Image.created_at).distinct(
+        ).join(
+            Master, Master.id == Image.master
+        ).filter(
+            Master.id == master_id,
+        ).order_by(desc("created_at")).limit(limit)
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
+
 async def get_discipline_violation_text():
     discipline_violations_for_current_month = await get_discipline_violations_for_current_month()
     if not discipline_violations_for_current_month:
@@ -157,6 +172,19 @@ async def get_available_masters() -> dict[int, str]:
         )
         result = await session.execute(stmt)
         return {r.id: r.name for r in result.fetchall()}
+
+
+async def get_available_and_not_day_off_masters(day: datetime) -> list[int]:
+    async with get_session() as session:
+        subquery = select(DayOff.master).where(DayOff.date == day)
+        stmt = select(
+            Master.tg_id
+        ).where(
+            Master.is_blocked == False,
+            ~Master.id.in_(subquery)
+        )
+        result = await session.execute(stmt)
+        return result.scalars().all()
 
 
 async def delete_selected_masters(masters_ids: list[int]) -> None:

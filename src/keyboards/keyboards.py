@@ -162,8 +162,14 @@ def vacation_kb() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Отпуск!",
-                    callback_data="start_vacation"
+                    text="Отпуск на 7 дней!",
+                    callback_data="start_vacation:7"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Отпуск на 14 дней!",
+                    callback_data="start_vacation:14"
                 )
             ],
             [

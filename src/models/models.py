@@ -49,3 +49,9 @@ class DisciplineViolation(Base):
     id = Column(Integer(), primary_key=True, autoincrement=True)
     master = Column(Integer(), ForeignKey("master.id"))
     date = Column(Date(), nullable=False, default=func.current_date())
+
+
+class GeneralCleaning(Base):
+    __tablename__ = "general_cleaning"
+    id = Column(Integer(), primary_key=True, autoincrement=True)
+    date = Column(Date(), nullable=False)
