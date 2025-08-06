@@ -148,7 +148,7 @@ async def get_discipline_violation(message: Message) -> None:
 
 
 @admin_handlers_router.message(F.text == DELETE_MASTERS)
-async def delete_worekers(message: Message, state: FSMContext) -> None:
+async def delete_workers(message: Message, state: FSMContext) -> None:
     logging.info(f"Assign workers for today")
     available_masters = await get_available_masters()
 
@@ -248,6 +248,11 @@ async def create_general_cleaning(message: Message, state: FSMContext) -> None:
         await send_general_cleaning_message(message.bot, date)
 
     await get_or_create_general_cleaning(date)
+
+    await message.reply(
+        GENERAL_CLEANING_SCHEDULED_MESSAGE.format(date=date.replace(hour=16)),
+        reply_markup=admin_keyboard
+    )
 
 
 @admin_handlers_router.message(F.text == GENERAL_CLEANING_ARCHIVE_BTN)
