@@ -124,7 +124,7 @@ async def get_images_for_the_date(selected_date: datetime):
             Master, Master.id == Image.master
         ).filter(
             func.DATE(Image.created_at) == selected_date
-        )
+        ).order_by(Master.name)
         result = await session.execute(stmt)
         images = result.all()
     return images
@@ -186,6 +186,14 @@ async def get_available_and_not_day_off_masters(day: datetime) -> list[int]:
         result = await session.execute(stmt)
         return result.scalars().all()
 
+async def get_working_masters_tg_ids() -> list[int]:
+    async with get_session() as session:
+        stmt = select(Master.tg_id).where(
+            Master.is_blocked == False
+        )
+        result = await session.execute(stmt)
+        return result.scalars().all()
+
 
 async def delete_selected_masters(masters_ids: list[int]) -> None:
     async with get_session() as session:
@@ -221,3 +229,4 @@ async def get_working_masters_chats_ids() -> list[int]:
         )
         result = await session.execute(stmt)
         return result.scalars().all()
+

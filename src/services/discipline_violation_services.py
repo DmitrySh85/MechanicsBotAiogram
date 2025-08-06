@@ -65,7 +65,8 @@ async def get_masters_with_violations_for_last_month():
         ).filter(
             func.extract('year', DisciplineViolation.date) == last_year,
             func.extract('month', DisciplineViolation.date) == last_month,
-            Master.is_manager == False
+            Master.is_manager == False,
+            Master.is_blocked == False
         ).group_by(Master.name)
         result = await session.execute(stmt)
         names = result.fetchall()

@@ -15,9 +15,11 @@ from static_text.static_text import (
     SHIFT_SUPERVISOR_BTN,
     DELETE_MASTERS,
     DAY_OFF_BTN,
-    VACATION_BTN
+    VACATION_BTN,
+    GENERAL_CLEANING_ARCHIVE_BTN
 )
 from static_data.static_data import GeneralCleaningDict, ShiftSupervisorDict
+from services.general_cleaning_services import GeneralCleaningDict
 
 
 master_keyboard = ReplyKeyboardMarkup(
@@ -53,6 +55,7 @@ admin_keyboard = ReplyKeyboardMarkup(
                 ],
                 [KeyboardButton(text=DELETE_MASTERS)],
                 [KeyboardButton(text=GENERAL_CLEANING_BTN)],
+                [KeyboardButton(text=GENERAL_CLEANING_ARCHIVE_BTN)],
             ],
             resize_keyboard=True,
         )
@@ -198,6 +201,41 @@ def day_off_kb() -> InlineKeyboardMarkup:
                     callback_data="cancel_day_off"
                 )
             ]
+        ]
+    )
+    return keyboard
+
+
+def general_cleaning_accept_kb(general_cleaning_id) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="Буду!",
+                    callback_data=f"accept_gc:{general_cleaning_id}:1"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Не буду!",
+                    callback_data=f"accept_gc:{general_cleaning_id}:0"
+                )
+            ]
+        ]
+    )
+    return keyboard
+
+
+def general_cleanings_archive_kb(general_cleanings: list[GeneralCleaningDict]) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=general_cleaning.get("date").strftime("%d-%m-%Y"),
+                    callback_data=f"archive_gc:{general_cleaning.get('id')}"
+                )
+            ]
+            for general_cleaning in general_cleanings
         ]
     )
     return keyboard

@@ -36,12 +36,16 @@ from static_text.static_text import (
     VACATION_START_TEXT,
     TOMORROW_DAY_OFF_TEXT,
     CANCEL_DAY_OFF_TEXT,
-    DAY_OFF_SCHEDULED_TEXT
+    DAY_OFF_SCHEDULED_TEXT,
+    GENERAL_CLEANING_ACCEPT_CONFIRMED_TEXT,
+    GENERAL_CLEANING_REJECT_TEXT,
+    GENERAL_CLEANING_REJECT_CONFIRMED_TEXT
 )
 from services.handlers_services import (
     get_master,
     save_image,
-    create_master_and_schedule
+    create_master_and_schedule,
+    get_master_id_from_chat_id
     )
 from keyboards.keyboards import (
     master_keyboard,
@@ -59,7 +63,8 @@ from forms.forms import (
     AddPhotoState,
     ShiftSupervisorState,
     VacationSelectState,
-    DayOffSelectState
+    DayOffSelectState,
+    GeneralCleaningRejectState
 )
 import logging
 from senders.senders import (
@@ -82,6 +87,10 @@ from services.telegram_services import delete_callback_query_message, delete_mes
 from static_data.static_data import GENERAL_CLEANING_CHECKLIST, SHIFT_SUPERVISOR_CHECKLIST
 from copy import deepcopy
 from services.general_cleaning_services import send_general_cleaning_photos_to_admin
+from services.general_cleaning_reaction_services import (
+    create_general_cleaning_reaction,
+    update_general_cleaning_reaction_with_text
+)
 
 
 handlers_router = Router()
@@ -520,3 +529,41 @@ async def start_vacation(callback_query: CallbackQuery, state: FSMContext) -> No
 
     await callback_query.message.answer(VACATION_START_TEXT)
     await callback_query.answer()
+
+
+
+@handlers_router.callback_query(F.data.startswith("accept_gc"))
+async def process_general_cleaning_reaction(callback_query: CallbackQuery, state: FSMContext) -> None:
+    callback_data = callback_query.data.split(":")
+    print(callback_data)
+    general_cleaning_id = int(callback_data[1])
+    is_confirmed = int(callback_data[2])
+    print(callback_query.message.chat.id)
+    master_id = await get_master_id_from_chat_id(callback_query.message.chat.id)
+    print(general_cleaning_id, is_confirmed, master_id)
+    reaction = await create_general_cleaning_reaction(general_cleaning_id, is_confirmed, int(master_id))
+    reaction_id = reaction.id
+    await callback_query.answer()
+    if is_confirmed:
+        await callback_query.message.answer(GENERAL_CLEANING_ACCEPT_CONFIRMED_TEXT)
+        return
+    data = await state.get_data()
+    await state.update_data(reaction_id=reaction_id)
+    await state.set_state(GeneralCleaningRejectState.reject_cleaning)
+    await callback_query.message.answer(GENERAL_CLEANING_REJECT_TEXT)
+
+
+@handlers_router.message(F.text, GeneralCleaningRejectState.reject_cleaning)
+async def process_general_cleaning_reject_reaction(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    reaction_id = data.get("reaction_id")
+    text = message.text
+    await update_general_cleaning_reaction_with_text(reaction_id, text)
+    await state.clear()
+    await message.answer(GENERAL_CLEANING_REJECT_CONFIRMED_TEXT)
+
+
+
+@handlers_router.message(GeneralCleaningRejectState.reject_cleaning)
+async def process_general_reject_reaction_error(message: Message, state: FSMContext) -> None:
+    await message.answer("Что-то пошло не так. Пожалуйста ответьте текстовым сообщением.")

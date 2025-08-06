@@ -1,6 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from aiogram import Router, F
+from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile, CallbackQuery
 from services.handlers_services import get_master
@@ -28,19 +30,26 @@ from static_text.static_text import (
     GENERAL_CLEANING,
     GENERAL_CLEANING_SELECT_TEXT,
     GENERAL_CLEANING_DATE_ERROR_TEXT,
-    GENERAL_CLEANING_SCHEDULED_MESSAGE
+    GENERAL_CLEANING_SCHEDULED_MESSAGE,
+    GENERAL_CLEANING_ARCHIVE_BTN
 )
 import logging
 from forms.forms import DateSelectState, MastersSelectState
 from keyboards.keyboards import (
     admin_keyboard,
     master_choose_keyboard,
-    general_cleaning_start_kb
+    general_cleaning_start_kb,
+    general_cleanings_archive_kb
 )
 from services.users_services import update_username
-from services.general_cleaning_services import get_or_create_general_cleaning
+from services.general_cleaning_services import get_or_create_general_cleaning, get_general_cleanings
 from forms.forms import GeneralCleaningState
 from senders.senders import send_general_cleaning_message
+from services.general_cleaning_reaction_services import (
+    get_general_cleaning_reactions,
+    process_reactions_to_text
+)
+
 
 
 admin_handlers_router = Router()
@@ -239,3 +248,34 @@ async def create_general_cleaning(message: Message, state: FSMContext) -> None:
         await send_general_cleaning_message(message.bot, date)
 
     await get_or_create_general_cleaning(date)
+
+
+@admin_handlers_router.message(F.text == GENERAL_CLEANING_ARCHIVE_BTN)
+async def process_general_cleaning_archive(message: Message) -> None:
+    start_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=365)
+    general_cleanings = await get_general_cleanings(start_date)
+    await message.answer(
+        "Выберите интересующий Вас ПХД:",
+        reply_markup=general_cleanings_archive_kb(general_cleanings)
+    )
+
+
+@admin_handlers_router.callback_query(F.data.startswith("archive_gc"))
+async def process_selected_general_cleaning(callback_query: CallbackQuery) -> None:
+    data = callback_query.data.split(":")
+    general_cleaning_id = int(data[1])
+
+    reactions = await get_general_cleaning_reactions(general_cleaning_id)
+    message_text = process_reactions_to_text(reactions)
+
+    await callback_query.answer()
+
+    try:
+        await callback_query.message.delete()
+    except TelegramBadRequest as e:
+        logging.warning(f"BAD REQUEST: {e}")
+
+    chunk_size = 4096
+    messages_texts = [message_text[i : i + chunk_size] for i in range(0, len(message_text), chunk_size)]
+    for message_text in messages_texts:
+        await callback_query.message.answer(text=message_text, parse_mode=ParseMode.MARKDOWN_V2)

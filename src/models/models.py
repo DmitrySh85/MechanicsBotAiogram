@@ -55,3 +55,12 @@ class GeneralCleaning(Base):
     __tablename__ = "general_cleaning"
     id = Column(Integer(), primary_key=True, autoincrement=True)
     date = Column(Date(), nullable=False)
+
+
+class GeneralCleaningReaction(Base):
+    __tablename__ = "general_cleaning_reaction"
+    id = Column(Integer(), primary_key=True, autoincrement=True)
+    master = Column(Integer(), ForeignKey("master.id"))
+    general_cleaning = Column(Integer(), ForeignKey("general_cleaning.id"))
+    is_confirmed = Column(Boolean(), default=False)
+    text = Column(String(500), nullable=True)

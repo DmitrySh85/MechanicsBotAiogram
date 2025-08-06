@@ -7,7 +7,10 @@ from scheduler import (
     send_evening_reminder_to_admins,
     save_discipline_violation,
     get_monthly_report,
-    check_general_cleaning_and_send_messages
+    check_general_cleaning_and_send_messages,
+    check_one_day_left_before_general_cleaning_and_send_message,
+    remind_to_admin_about_general_cleaning,
+    check_two_day_left_before_general_cleaning_and_send_message
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from settings import START_WORK_TIME, END_WORK_TIME, REMINDER_OFFSET, ADMIN_NOTIFICATION_DELAY
@@ -64,10 +67,29 @@ scheduler.add_job(
     day=1
 )
 scheduler.add_job(
+    check_two_day_left_before_general_cleaning_and_send_message,
+    trigger='cron',
+    hour=16,
+    minute=0,
+)
+scheduler.add_job(
+    check_one_day_left_before_general_cleaning_and_send_message,
+    trigger='cron',
+    hour=16,
+    minute=0
+)
+scheduler.add_job(
     check_general_cleaning_and_send_messages,
     trigger='cron',
+    hour=16,
+    minute=0
+)
+scheduler.add_job(
+    remind_to_admin_about_general_cleaning,
+    trigger='cron',
     hour=10,
-    minute=1
+    minute=2,
+    day=1
 )
 
 

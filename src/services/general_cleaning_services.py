@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from aiogram import Bot
 from aiogram.types import FSInputFile, InputMediaPhoto
 from db import get_session
@@ -8,6 +10,11 @@ from services.users_services import get_manager_tg_ids_from_db
 from services.handlers_services import get_master
 from static_data.static_data import GENERAL_CLEANING_CHECKLIST
 from services.admin_services import get_last_images
+
+
+class GeneralCleaningDict(TypedDict):
+    id: int
+    date: datetime
 
 
 async def get_or_create_general_cleaning(date: datetime.date) -> GeneralCleaning:
@@ -53,3 +60,9 @@ async def send_general_cleaning_photos_to_admin(
             [InputMediaPhoto(media=FSInputFile(image_link)) for image_link in images_links]
         )
 
+
+async def get_general_cleanings(date: datetime.date) -> list[GeneralCleaningDict]:
+    async with get_session() as session:
+        stmt = select(GeneralCleaning.id, GeneralCleaning.date).where(GeneralCleaning.date >= date)
+        result = await session.execute(stmt)
+        return [GeneralCleaningDict(id=gc.id, date=gc.date) for gc in result.fetchall()]

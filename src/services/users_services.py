@@ -70,7 +70,10 @@ async def update_username(user_id: int, username: str) -> None:
 
 async def get_all_masters_names():
     async with get_session() as session:
-        stmt = select(Master.name).where(Master.is_manager == False)
+        stmt = select(Master.name).where(
+            Master.is_manager == False,
+            Master.is_blocked == False
+        )
         result = await session.execute(stmt)
     return result.fetchall()
 

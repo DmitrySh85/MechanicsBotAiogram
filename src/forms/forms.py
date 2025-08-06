@@ -36,3 +36,7 @@ class VacationSelectState(StatesGroup):
 
 class DayOffSelectState(StatesGroup):
     day_off_select = State()
+
+
+class GeneralCleaningRejectState(StatesGroup):
+    reject_cleaning = State()
