@@ -86,8 +86,9 @@ async def get_photos_for_today(message: Message) -> None:
         await message.reply(ADMIN_NO_PHOTO_TEXT)
         return
     for result in results:
-        photo = FSInputFile(result["link"])
-        await message.reply_photo(photo=photo, reply_markup=admin_keyboard)
+        photo = FSInputFile(result["image_link"])
+        text = result["text"]
+        await message.reply_photo(photo=photo, caption=text, reply_markup=admin_keyboard)
 
 
 @admin_handlers_router.message(F.text == "Фото за выбранный день")
