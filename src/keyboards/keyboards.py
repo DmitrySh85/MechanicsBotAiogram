@@ -232,7 +232,7 @@ def general_cleanings_archive_kb(general_cleanings: list[GeneralCleaningDict]) -
             [
                 InlineKeyboardButton(
                     text=general_cleaning.get("date").strftime("%d-%m-%Y"),
-                    callback_data=f"archive_gc:{general_cleaning.get('id')}"
+                    callback_data=f"archive_gc:{general_cleaning.get('id')}:{general_cleaning.get('date').strftime('%d-%m-%Y')}"
                 )
             ]
             for general_cleaning in general_cleanings

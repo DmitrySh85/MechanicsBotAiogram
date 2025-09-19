@@ -42,14 +42,17 @@ from keyboards.keyboards import (
     general_cleanings_archive_kb
 )
 from services.users_services import update_username
-from services.general_cleaning_services import get_or_create_general_cleaning, get_general_cleanings
+from services.general_cleaning_services import (
+    get_or_create_general_cleaning,
+    get_general_cleanings,
+    get_general_cleaning_images_with_category_for_date
+)
 from forms.forms import GeneralCleaningState
 from senders.senders import send_general_cleaning_message
 from services.general_cleaning_reaction_services import (
     get_general_cleaning_reactions,
     process_reactions_to_text
 )
-
 
 
 admin_handlers_router = Router()
@@ -270,6 +273,7 @@ async def process_general_cleaning_archive(message: Message) -> None:
 async def process_selected_general_cleaning(callback_query: CallbackQuery) -> None:
     data = callback_query.data.split(":")
     general_cleaning_id = int(data[1])
+    general_cleaning_date = datetime.strptime(data[2], "%d-%m-%Y").date()
 
     reactions = await get_general_cleaning_reactions(general_cleaning_id)
     message_text = process_reactions_to_text(reactions)
@@ -285,3 +289,12 @@ async def process_selected_general_cleaning(callback_query: CallbackQuery) -> No
     messages_texts = [message_text[i : i + chunk_size] for i in range(0, len(message_text), chunk_size)]
     for message_text in messages_texts:
         await callback_query.message.answer(text=message_text, parse_mode=ParseMode.MARKDOWN_V2)
+
+    images = await get_general_cleaning_images_with_category_for_date(general_cleaning_date)
+    for image in images:
+        caption =  f"{image.name}: {image.category}"
+        await callback_query.message.answer_photo(
+            photo=FSInputFile(image.link),
+            caption=caption
+        )
+

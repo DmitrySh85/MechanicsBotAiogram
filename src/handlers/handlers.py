@@ -195,7 +195,8 @@ async def start_work_handler(message: Message, state: FSMContext) -> None:
 @handlers_router.message(StartWorkForm.start_work, F.photo)
 async def process_start_work_image(message: Message, state: FSMContext) -> None:
     logging.info(f"Start work image from {message.chat.id}")
-    await save_image(message)
+    category = "Начало рабочего дня"
+    await save_image(message, category)
     await state.clear()
     await message.answer(MASTER_START_WORK_IMAGE_RECEIVED_TEXT, reply_markup=master_keyboard)
 
@@ -214,7 +215,8 @@ async def end_work_handler(message: Message, state: FSMContext) -> None:
 @handlers_router.message(EndWorkForm.end_work, F.photo)
 async def process_start_work_image(message: Message, state: FSMContext) -> None:
     logging.info(f"End work image from {message.chat.id}")
-    await save_image(message)
+    category = "Завершение рабочего дня"
+    await save_image(message, category)
     await state.clear()
     await message.answer(MASTER_END_WORK_IMAGE_RECEIVED_TEXT, reply_markup=master_keyboard)
 
@@ -324,8 +326,6 @@ async def process_day_off_handler(message: Message) -> None:
 @handlers_router.message(F.photo, GeneralCleaningState.general_cleaning)
 async def process_cleaning_photo(message: Message, state: FSMContext):
 
-    await save_image(message)
-
     data = await state.get_data()
     message_id = data.get("message_id")
     await delete_message(message, message_id)
@@ -340,6 +340,9 @@ async def process_cleaning_photo(message: Message, state: FSMContext):
         text = INVALID_ACTION_TEXT
         await message.answer(text=text, reply_markup=general_cleaning_kb(elements))
         return
+
+    category = current_element.get("readable_name")
+    await save_image(message, category)
 
     elements.remove(current_element)
 

@@ -10,12 +10,12 @@ from settings import START_WORK_TIME, END_WORK_TIME
 import logging
 
 
-async def save_image(message: Message):
+async def save_image(message: Message, category: str | None = None) -> None:
     try:
         image_link = await save_image_to_hdd(message)
         chat_id = message.chat.id
         master_id = await get_master_id_from_chat_id(chat_id)
-        await add_image_link_to_db(image_link, master_id)
+        await add_image_link_to_db(image_link, master_id, category)
     except Exception as e:
         logging.info(e)
 
@@ -29,12 +29,13 @@ async def save_image_to_hdd(message):
     return file_path
 
 
-async def add_image_link_to_db(image_link, master_id):
+async def add_image_link_to_db(image_link: str, master_id: int, category: str | None = None) -> None:
     async with get_session() as session:
         stmt = insert(Image).values(
             master=master_id,
             link=image_link,
-            created_at=datetime.now(tz=pytz.timezone("Europe/Moscow"))
+            created_at=datetime.now(tz=pytz.timezone("Europe/Moscow")),
+            category=category
         )
         await session.execute(stmt)
         await session.commit()

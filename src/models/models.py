@@ -35,6 +35,7 @@ class Image(Base):
     master = Column(Integer(), ForeignKey("master.id"))
     created_at = Column(DateTime(timezone=True), default=func.now())
     link = Column(String(300), nullable=False)
+    category = Column(String(300), nullable=True)
 
 
 class DayOff(Base):

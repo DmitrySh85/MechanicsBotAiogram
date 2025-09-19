@@ -2,7 +2,8 @@ import asyncio
 import logging
 import sys
 from scheduler import (
-    send_reminder_to_masters,
+    send_day_reminder_to_masters,
+    send_evening_reminder_to_masters,
     send_day_reminder_to_admins,
     send_evening_reminder_to_admins,
     save_discipline_violation,
@@ -28,7 +29,12 @@ time_end = convert_string_to_time_with_offset(END_WORK_TIME, REMINDER_OFFSET)
 admin_notification_time_end = convert_string_to_time_with_offset(END_WORK_TIME, str(int(REMINDER_OFFSET) + ADMIN_NOTIFICATION_DELAY))
 
 
-scheduler.add_job(send_reminder_to_masters, trigger='cron', hour=time_start.hour, minute=time_start.minute)
+scheduler.add_job(
+    send_day_reminder_to_masters,
+    trigger='cron',
+    hour=time_start.hour,
+    minute=time_start.minute
+)
 scheduler.add_job(
     send_day_reminder_to_admins,
     trigger='cron',
@@ -42,7 +48,7 @@ scheduler.add_job(
     minute=admin_notification_time_start.minute,
 )
 scheduler.add_job(
-    send_reminder_to_masters,
+    send_evening_reminder_to_masters,
     trigger='cron',
     hour=time_end.hour,
     minute=time_end.minute,

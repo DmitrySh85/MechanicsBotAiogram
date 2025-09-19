@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from db import get_session
 from sqlalchemy import select, func
 from models.models import Master, Image, DayOff
@@ -6,7 +8,11 @@ from .users_services import get_all_masters_names
 import logging
 
 
-async def check_masters_not_send_photo(start_time, end_time):
+async def check_masters_not_send_photo(
+        start_time: datetime,
+        end_time: datetime,
+        category: str
+):
     async with get_session() as session:
         subquery = select(
             Master.id).join(
@@ -14,6 +20,7 @@ async def check_masters_not_send_photo(start_time, end_time):
             ).filter(
             Image.created_at >= start_time,
             Image.created_at <= end_time,
+            Image.category == category
         )
         day_off_query = select(DayOff.master).filter(DayOff.date == func.current_date())
         stmt = select(Master.tg_id).filter(
