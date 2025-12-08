@@ -15,7 +15,8 @@ from services.admin_services import (
     get_discipline_violation_text,
     get_available_masters,
     delete_selected_masters,
-    get_working_masters_chats_ids
+    get_working_masters_chats_ids,
+    get_working_masters_tg_ids
 )
 from static_text.static_text import (
     ADMIN_NO_PHOTO_TEXT,
@@ -39,7 +40,8 @@ from keyboards.keyboards import (
     admin_keyboard,
     master_choose_keyboard,
     general_cleaning_start_kb,
-    general_cleanings_archive_kb
+    general_cleanings_archive_kb,
+    general_cleaning_accept_kb
 )
 from services.users_services import update_username
 from services.general_cleaning_services import (
@@ -251,12 +253,23 @@ async def create_general_cleaning(message: Message, state: FSMContext) -> None:
     elif date == today:
         await send_general_cleaning_message(message.bot, date)
 
-    await get_or_create_general_cleaning(date)
+    general_cleaning = await get_or_create_general_cleaning(date)
 
     await message.reply(
         GENERAL_CLEANING_SCHEDULED_MESSAGE.format(date=date.replace(hour=16)),
         reply_markup=admin_keyboard
     )
+    masters_ids = await get_working_masters_tg_ids()
+    for master_id in masters_ids:
+        try:
+            await message.bot.send_message(
+                master_id,
+                text = f"Генеральная уборка назначена на {date}",
+                reply_markup=general_cleaning_accept_kb(general_cleaning.id)
+            )
+        except Exception as e:
+            logging.warning(e)
+
 
 
 @admin_handlers_router.message(F.text == GENERAL_CLEANING_ARCHIVE_BTN)

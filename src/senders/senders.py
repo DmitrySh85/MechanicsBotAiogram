@@ -52,7 +52,7 @@ async def send_general_cleaning_message(
         bot: Bot,
         date: datetime.date
 ) -> None:
-    masters_chats_ids = await get_available_and_not_day_off_masters(date)
+    masters_chats_ids = await get_working_masters_tg_ids(date)
     for master_chat_id in masters_chats_ids:
         try:
             await bot.send_message(

@@ -538,12 +538,9 @@ async def start_vacation(callback_query: CallbackQuery, state: FSMContext) -> No
 @handlers_router.callback_query(F.data.startswith("accept_gc"))
 async def process_general_cleaning_reaction(callback_query: CallbackQuery, state: FSMContext) -> None:
     callback_data = callback_query.data.split(":")
-    print(callback_data)
     general_cleaning_id = int(callback_data[1])
     is_confirmed = int(callback_data[2])
-    print(callback_query.message.chat.id)
     master_id = await get_master_id_from_chat_id(callback_query.message.chat.id)
-    print(general_cleaning_id, is_confirmed, master_id)
     reaction = await create_general_cleaning_reaction(general_cleaning_id, is_confirmed, int(master_id))
     reaction_id = reaction.id
     await callback_query.answer()

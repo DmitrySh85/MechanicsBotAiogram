@@ -73,12 +73,6 @@ scheduler.add_job(
     day=1
 )
 scheduler.add_job(
-    check_two_day_left_before_general_cleaning_and_send_message,
-    trigger='cron',
-    hour=16,
-    minute=0,
-)
-scheduler.add_job(
     check_one_day_left_before_general_cleaning_and_send_message,
     trigger='cron',
     hour=16,
