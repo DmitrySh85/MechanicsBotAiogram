@@ -7,7 +7,6 @@ from sqlalchemy import update, select
 
 async def register_user(tg_id: int, username: str):
     master = await get_master(tg_id)
-    print("MASTER", master)
     if not master:
         await insert_master_to_db(tg_id, username)
     else:
@@ -77,3 +76,28 @@ async def get_all_masters_names():
         result = await session.execute(stmt)
     return result.fetchall()
 
+
+async def set_master_is_manager(master_id: int):
+    async with get_session() as session:
+        stmt = update(
+            Master
+        ).where(
+            Master.id == master_id
+        ).values(
+            is_manager=True
+        )
+        await session.execute(stmt)
+        await session.commit()
+
+
+async def set_master_is_not_manager(master_id: int):
+    async with get_session() as session:
+        stmt = update(
+            Master
+        ).where(
+            Master.id == master_id
+        ).values(
+            is_manager=False
+        )
+        await session.execute(stmt)
+        await session.commit()

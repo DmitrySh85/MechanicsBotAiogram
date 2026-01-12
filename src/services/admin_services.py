@@ -31,6 +31,7 @@ async def get_working_masters_names() -> List[str]:
         result = await session.execute(stmt)
         return result.scalars().all()
 
+
 def transfer_working_masters_names_to_message_text(working_masters_names) -> str:
     message_text = "Сегодня работают:\n" + "\n".join(working_masters_names)
     return message_text
@@ -108,6 +109,7 @@ def get_result_dict_from_querys(querys):
         )
     return results
 
+
 def parse_date_from_message_text(text: str) -> date:
     return datetime.strptime(text, "%d-%m-%Y")
 
@@ -174,6 +176,15 @@ async def get_available_masters() -> dict[int, str]:
         return {r.id: r.name for r in result.fetchall()}
 
 
+async def get_available_masters_and_admins() -> list[dict[str, str | int |bool]]:
+    async with get_session() as session:
+        stmt = select(Master.id, Master.name, Master.is_manager).where(
+            Master.is_blocked == False,
+        )
+        result = await session.execute(stmt)
+        return [{"id": r.id, "name": r.name, "is_manager": r.is_manager} for r in result.fetchall()]
+
+
 async def get_available_and_not_day_off_masters(day: datetime) -> list[int]:
     async with get_session() as session:
         subquery = select(DayOff.master).where(DayOff.date == day)
@@ -185,6 +196,7 @@ async def get_available_and_not_day_off_masters(day: datetime) -> list[int]:
         )
         result = await session.execute(stmt)
         return result.scalars().all()
+
 
 async def get_working_masters_tg_ids() -> list[int]:
     async with get_session() as session:
@@ -230,3 +242,19 @@ async def get_working_masters_chats_ids() -> list[int]:
         result = await session.execute(stmt)
         return result.scalars().all()
 
+
+
+async def get_day_off_masters_ids(
+        selected_masters_ids: list[int]
+) -> list[int]:
+
+    available_masters = await get_available_masters()
+    available_masters_ids = available_masters.keys()
+
+    day_off_masters_ids = list(available_masters_ids)
+    for master_id in selected_masters_ids:
+        try:
+            day_off_masters_ids.remove(master_id)
+        except ValueError:
+            continue
+    return day_off_masters_ids

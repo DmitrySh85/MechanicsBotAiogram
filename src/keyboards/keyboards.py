@@ -6,7 +6,6 @@ from static_text.static_text import (
     registration_reject_callback_data,
     START_WORK_BTN,
     END_WORK_BTN,
-    DAY_OFF_BTN,
     SCHEDULE_BTN,
     WORKPLACE_IMAGE_BTN,
     SELECTED_DATE_IMAGE_BTN,
@@ -14,8 +13,7 @@ from static_text.static_text import (
     GENERAL_CLEANING_BTN,
     SHIFT_SUPERVISOR_BTN,
     DELETE_MASTERS,
-    DAY_OFF_BTN,
-    VACATION_BTN,
+    AVAILABLE_MASTERS,
     GENERAL_CLEANING_ARCHIVE_BTN
 )
 from static_data.static_data import GeneralCleaningDict, ShiftSupervisorDict
@@ -31,14 +29,8 @@ master_keyboard = ReplyKeyboardMarkup(
                     KeyboardButton(text=END_WORK_BTN),
                 ],
                 [
-                    KeyboardButton(text=DAY_OFF_BTN),
-                ],
-                [
                     KeyboardButton(text=SHIFT_SUPERVISOR_BTN)
                 ],
-                [
-                    KeyboardButton(text=VACATION_BTN)
-                ]
             ],
             resize_keyboard=True,
         )
@@ -53,6 +45,7 @@ admin_keyboard = ReplyKeyboardMarkup(
                 KeyboardButton(text=SELECTED_DATE_IMAGE_BTN),
                 KeyboardButton(text=DISCIPLINE_VIOLATION_BTN)
                 ],
+                [KeyboardButton(text=AVAILABLE_MASTERS)],
                 [KeyboardButton(text=DELETE_MASTERS)],
                 [KeyboardButton(text=GENERAL_CLEANING_BTN)],
                 [KeyboardButton(text=GENERAL_CLEANING_ARCHIVE_BTN)],
@@ -160,52 +153,6 @@ def general_cleaning_start_kb() -> InlineKeyboardMarkup:
     return keyboard
 
 
-def vacation_kb() -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Отпуск на 7 дней!",
-                    callback_data="start_vacation:7"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="Отпуск на 14 дней!",
-                    callback_data="start_vacation:14"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="Отмена",
-                    callback_data="cancel_vacation"
-                )
-            ]
-        ]
-    )
-    return keyboard
-
-
-def day_off_kb() -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Выходной!",
-                    callback_data="start_day_off"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="Нет",
-                    callback_data="cancel_day_off"
-                )
-            ]
-        ]
-    )
-    return keyboard
-
-
 def general_cleaning_accept_kb(general_cleaning_id) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -237,5 +184,84 @@ def general_cleanings_archive_kb(general_cleanings: list[GeneralCleaningDict]) -
             ]
             for general_cleaning in general_cleanings
         ]
+    )
+    return keyboard
+
+
+def edit_masters_kb(masters: list[dict[str, int| str| bool]]) -> InlineKeyboardMarkup:
+    inline_keyboard = []
+    for master in masters:
+        if master["is_manager"]:
+            inline_keyboard.append(
+                [
+                        InlineKeyboardButton(
+                        text=f"Удалить из менеджеров: {master['name']}",
+                        callback_data=f"admin_remove:{master['id']}"
+                    )
+                ]
+            )
+        else:
+            inline_keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        text=f"Добавить менеджера: {master['name']}",
+                        callback_data=f"admin_add:{master['id']}"
+                    )
+                ]
+            )
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=inline_keyboard
+    )
+    return keyboard
+
+
+def masters_select_request_kb():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="Выбрать мастеров",
+                    callback_data="select_working_masters"
+                )
+            ]
+        ]
+    )
+    return keyboard
+
+
+def select_working_masters_kb(
+    available_masters: dict[int, str],
+    selected_masters: dict[int, str]
+):
+    cancel_btn = [
+        InlineKeyboardButton(
+            text="ОТМЕНА ",
+            callback_data="cancel_masters_select"
+        )
+    ]
+    submit_btn = [
+        InlineKeyboardButton(
+            text="ПОДТВЕРДИТЬ",
+            callback_data="submit_masters_select"
+        )
+    ]
+    available_masters_btns = [
+        [
+            InlineKeyboardButton(
+                text=f"Добавить: {value}",
+                callback_data=f"assign_master:{key}"
+            )
+        ]
+    for key, value in available_masters.items()]
+    selected_masters_btns = [
+        [
+            InlineKeyboardButton(
+                text=f"Убрать: {value}",
+                callback_data=f"remove_master:{key}"
+        )]
+    for key, value in selected_masters.items()]
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=available_masters_btns + selected_masters_btns + [cancel_btn] + [submit_btn]
+
     )
     return keyboard

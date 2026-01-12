@@ -12,9 +12,14 @@ from datetime import datetime, timedelta
 from static_text.static_text import (
     MISSING_PHOTO_TEXT,
     NO_PHOTO_ADMIN_NOTIFICATION_TEXT,
-    GENERAL_CLEANING_REMINDER_TEXT
+    GENERAL_CLEANING_REMINDER_TEXT,
+    MASTERS_SELECT_REQUEST
 )
-from keyboards.keyboards import master_keyboard, admin_keyboard
+from keyboards.keyboards import (
+    master_keyboard,
+    admin_keyboard,
+    masters_select_request_kb
+)
 from services.users_services import get_manager_tg_ids_from_db
 from services.discipline_violation_services import create_discipline_violation
 from services.general_cleaning_services import get_general_cleaning
@@ -150,3 +155,10 @@ async def remind_to_admin_about_general_cleaning():
     for chat_id in managers_chat_ids:
         await bot.send_message(chat_id, message_text, reply_markup=admin_keyboard)
 
+
+async def send_working_masters_for_tomorrow_request():
+    logging.info("request admin about working masters for tomorrow")
+    message_text = MASTERS_SELECT_REQUEST
+    managers_chat_ids = await get_manager_tg_ids_from_db()
+    for chat_id in managers_chat_ids:
+        await bot.send_message(chat_id, message_text, reply_markup=masters_select_request_kb())

@@ -98,3 +98,12 @@ def convert_string_to_time_with_offset(string: str, offset: str) -> time:
     t = datetime.strptime(string, '%H:%M:%S')
     result = t + timedelta(minutes=int(offset))
     return result.time()
+
+
+def convert_master_data_to_text(
+        master: dict[str, str| int | bool]
+):
+    text = f"{master['name']}"
+    if master.get("is_manager"):
+        text += " (Администратор)"
+    return text

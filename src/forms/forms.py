@@ -40,3 +40,7 @@ class DayOffSelectState(StatesGroup):
 
 class GeneralCleaningRejectState(StatesGroup):
     reject_cleaning = State()
+
+
+class SelectWorkingMastersForTomorrow(StatesGroup):
+    select_master = State()
