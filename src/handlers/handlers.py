@@ -173,6 +173,7 @@ async def handle_update_username(message: Message) -> None:
 
 @handlers_router.message(F.text == "Приступил к работе")
 async def start_work_handler(message: Message, state: FSMContext) -> None:
+    await state.clear()
     logging.info(f"Start work button from {message.chat.id}")
     user = await get_master(message.chat.id)
     if not user:
@@ -193,6 +194,7 @@ async def process_start_work_image(message: Message, state: FSMContext) -> None:
 
 @handlers_router.message(F.text == "Закончил работу")
 async def end_work_handler(message: Message, state: FSMContext) -> None:
+    await state.clear()
     logging.info(f"End work button from {message.chat.id}")
     user = await get_master(message.chat.id)
     if not user:

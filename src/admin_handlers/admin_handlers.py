@@ -81,7 +81,8 @@ admin_handlers_router = Router()
 
 
 @admin_handlers_router.message(F.text == "Расписание на сегодня")
-async def get_schedule_for_today(message: Message) -> None:
+async def get_schedule_for_today(message: Message, state: FSMContext) -> None:
+    await state.clear()
     logging.info(f"Schedule for today from {message.chat.id}")
     user = await get_master(message.chat.id)
     if not user or not user.is_manager:
@@ -96,7 +97,8 @@ async def get_schedule_for_today(message: Message) -> None:
 
 
 @admin_handlers_router.message(F.text == "Фото рабочего места")
-async def get_photos_for_today(message: Message) -> None:
+async def get_photos_for_today(message: Message, state: FSMContext) -> None:
+    await state.clear()
     logging.info(f"Photos for today from {message.chat.id}")
     user = await get_master(message.chat.id)
     if not user or not user.is_manager:
@@ -118,6 +120,7 @@ async def get_photos_for_today(message: Message) -> None:
 
 @admin_handlers_router.message(F.text == "Фото за выбранный день")
 async def send_date_request(message: Message, state: FSMContext) -> None:
+    await state.clear()
     logging.info(f"Photos for the day from {message.chat.id}")
     user = await get_master(message.chat.id)
     user_id = user.id
@@ -150,7 +153,8 @@ async def get_photos_for_the_date(message: Message, state: FSMContext) -> None:
 
 
 @admin_handlers_router.message(F.text == DISCIPLINE_VIOLATION_BTN)
-async def get_discipline_violation(message: Message) -> None:
+async def get_discipline_violation(message: Message, state: FSMContext) -> None:
+    await state.clear()
     logging.info(f"get discipline violation from {message.chat.id}")
 
     user = await get_master(message.chat.id)
@@ -176,7 +180,8 @@ async def get_discipline_violation(message: Message) -> None:
 
 
 @admin_handlers_router.message(F.text == AVAILABLE_MASTERS)
-async def get_masters(message: Message) -> None:
+async def get_masters(message: Message, state: FSMContext) -> None:
+    await state.clear()
     logging.info(f"get available masters from {message.chat.id}")
 
     user = await get_master(message.chat.id)
@@ -331,6 +336,7 @@ async def process_remove_master_from_working_query(callback_query: CallbackQuery
 
 @admin_handlers_router.message(F.text == DELETE_MASTERS)
 async def delete_workers(message: Message, state: FSMContext) -> None:
+    await state.clear()
     logging.info(f"Assign workers for deletion")
     available_masters = await get_available_masters()
 
@@ -409,6 +415,7 @@ async def finish_master_choose(callback_query: CallbackQuery, state: FSMContext)
 
 @admin_handlers_router.message(F.text == GENERAL_CLEANING_BTN)
 async def init_general_cleaning(message: Message, state: FSMContext) -> None:
+    await state.clear()
     await state.set_state(GeneralCleaningState.general_cleaning_select_date)
     await message.answer(GENERAL_CLEANING_SELECT_TEXT)
 

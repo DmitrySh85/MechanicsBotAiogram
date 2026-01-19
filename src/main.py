@@ -94,14 +94,7 @@ scheduler.add_job(
 scheduler.add_job(
     send_working_masters_for_tomorrow_request,
     trigger='cron',
-    hour=11,
-    minute=0
-)
-
-scheduler.add_job(
-    send_working_masters_for_tomorrow_request,
-    trigger='cron',
-    hour=8,
+    hour=14,
     minute=0
 )
 
