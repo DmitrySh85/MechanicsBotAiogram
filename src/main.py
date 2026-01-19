@@ -19,7 +19,13 @@ from services.handlers_services import convert_string_to_time_with_offset
 
 from dispatcher import start_polling
 
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    stream=sys.stdout,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
 
