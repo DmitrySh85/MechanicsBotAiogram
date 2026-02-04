@@ -447,7 +447,7 @@ async def create_general_cleaning(message: Message, state: FSMContext) -> None:
         try:
             await message.bot.send_message(
                 master_id,
-                text = f"Генеральная уборка назначена на {date}",
+                text = f"Генеральная уборка назначена на {date.replace(hour=16)}",
                 reply_markup=general_cleaning_accept_kb(general_cleaning.id)
             )
         except Exception as e:
